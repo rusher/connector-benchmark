@@ -1,0 +1,7 @@
+
+# Keep empty directories:
+# Keep empty directories: >> .gitignore/.git*
+.idea
+/connector-benchmark.iml
+/java/target
+java_results.txt
