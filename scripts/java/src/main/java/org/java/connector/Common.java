@@ -26,7 +26,7 @@ public class Common {
   // conf
   public static final String host = getEnv("TEST_DB_HOST", "localhost");
   public static final int port = Integer.parseInt(getEnv("TEST_DB_PORT", "3306"));
-  public static final String username = getEnv("TEST_DB_USERNAME", "root");
+  public static final String username = getEnv("TEST_DB_USER", "root");
   public static final String password = getEnv("TEST_DB_PASSWORD", "");
   public static final String database = getEnv("TEST_DB_DATABASE", "testj");
   public static final String other = getEnv("TEST_DB_OTHER", "");
