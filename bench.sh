@@ -242,7 +242,8 @@ if [ "$INSTALLATION" == "true" ] ; then
   esac
 else
   if [[ $LD_LIBRARY_PATH != *":/usr/local/lib"* ]]; then
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/mariadb
+    echo $LD_LIBRARY_PATH
   fi
   case $LANGUAGE in
     java)
