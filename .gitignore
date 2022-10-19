@@ -3,5 +3,11 @@
 # Keep empty directories: >> .gitignore/.git*
 .idea
 /connector-benchmark.iml
-/java/target
-java_results.txt
+bench_results_*
+/repo
+/scripts/java/target
+/scripts/c/main-benchmark
+/scripts/cpp/main-benchmark
+/scripts/node/node_modules
+/scripts/node/package-lock.json
+
