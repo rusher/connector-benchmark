@@ -179,22 +179,22 @@ echo "parsing parameters"
 
 INSTALLATION=false
 
-TEST_HOST=localhost
-TEST_PORT=3306
-TEST_USERNAME=root
-TEST_DATABASE=bench
-TEST_OTHER=
+export TEST_DB_HOST=localhost
+export TEST_DB_PORT=3306
+export TEST_DB_USER=root
+export TEST_DB_DATABASE=bench
+export TEST_OTHER=
 
 while getopts ":l:t:ip:h:d:u:w:" flag; do
   case "${flag}" in
-    l) LANGUAGE=${OPTARG};;
-    t) TYPE=${OPTARG};;
+    l) export LANGUAGE=${OPTARG};;
+    t) export TYPE=${OPTARG};;
     i) INSTALLATION=true;;
-    p) TEST_PORT=${OPTARG};;
-    h) TEST_HOST=${OPTARG};;
-    d) TEST_DATABASE=${OPTARG};;
-    u) TEST_USERNAME=${OPTARG};;
-    w) TEST_PASSWORD=${OPTARG};;
+    p) export TEST_DB_PORT=${OPTARG};;
+    h) export TEST_DB_HOST=${OPTARG};;
+    d) export TEST_DB_DATABASE=${OPTARG};;
+    u) export TEST_DB_USER=${OPTARG};;
+    w) export TEST_DB_PASSWORD=${OPTARG};;
   esac
 done
 
@@ -202,11 +202,11 @@ echo "parameters:"
 echo "TYPE: ${TYPE}"
 echo "INSTALLATION: ${INSTALLATION}"
 echo "LANGUAGE: ${LANGUAGE}"
-echo "TEST_HOST: ${TEST_HOST}"
-echo "TEST_PORT: ${TEST_PORT}"
-echo "TEST_USERNAME: ${TEST_USERNAME}"
-echo "TEST_DATABASE: ${TEST_DATABASE}"
-echo "TEST_PASSWORD: ${TEST_PASSWORD}"
+echo "TEST_DB_HOST: ${TEST_DB_HOST}"
+echo "TEST_DB_PORT: ${TEST_DB_PORT}"
+echo "TEST_DB_USER: ${TEST_DB_USER}"
+echo "TEST_DB_DATABASE: ${TEST_DB_DATABASE}"
+echo "TEST_DB_PASSWORD: ${TEST_DB_PASSWORD}"
 
 
 
@@ -218,14 +218,14 @@ if [ "$INSTALLATION" == "true" ] ; then
       ;;
     c)
       rm -rf $PROJ_PATH/repo
-      installation_benchmark
       installation_c
+      installation_benchmark
       ;;
     cpp)
       rm -rf $PROJ_PATH/repo
-      installation_benchmark
       installation_c
       installation_cpp
+      installation_benchmark
       ;;
     node)
       installation_nodejs
@@ -233,9 +233,9 @@ if [ "$INSTALLATION" == "true" ] ; then
 
     *)
       rm -rf $PROJ_PATH/repo
-      installation_benchmark
       installation_c
       installation_cpp
+      installation_benchmark
       installation_java
       installation_nodejs
       ;;

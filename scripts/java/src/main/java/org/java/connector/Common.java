@@ -12,6 +12,8 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.*;
 
+
+
 @State(Scope.Benchmark)
 @Warmup(iterations = 10, timeUnit = TimeUnit.SECONDS, time = 1)
 @Measurement(iterations = 10, timeUnit = TimeUnit.SECONDS, time = 1)
@@ -22,12 +24,18 @@ import org.openjdk.jmh.annotations.*;
 public class Common {
 
   // conf
-  public static final String host = System.getProperty("TEST_HOST", "localhost");
-  public static final int port = Integer.parseInt(System.getProperty("TEST_PORT", "3306"));
-  public static final String username = System.getProperty("TEST_USERNAME", "root");
-  public static final String password = System.getProperty("TEST_PASSWORD", "");
-  public static final String database = System.getProperty("TEST_DATABASE", "testj");
-  public static final String other = System.getProperty("TEST_OTHER", "");
+  public static final String host = getEnv("TEST_DB_HOST", "localhost");
+  public static final int port = Integer.parseInt(getEnv("TEST_DB_PORT", "3306"));
+  public static final String username = getEnv("TEST_DB_USERNAME", "root");
+  public static final String password = getEnv("TEST_DB_PASSWORD", "");
+  public static final String database = getEnv("TEST_DB_DATABASE", "testj");
+  public static final String other = getEnv("TEST_DB_OTHER", "");
+
+  public static String getEnv(String key, String defaultValue) {
+    String env =  System.getenv(key);
+    if (env != null) return env;
+    return defaultValue;
+  }
 
   @State(Scope.Thread)
   public static class MyState {

@@ -27,7 +27,7 @@ let baseConfig = {
   port: 3306
 };
 
-if (process.env.TEST_DB_HOST) baseConfig['host'] = process.env.TEST_HOST;
+if (process.env.TEST_DB_HOST) baseConfig['host'] = process.env.TEST_DB_HOST;
 if (process.env.TEST_DB_USER) baseConfig['user'] = process.env.TEST_USER;
 if (process.env.TEST_DB_PASSWORD) baseConfig['password'] = process.env.TEST_PASSWORD;
 if (process.env.TEST_DB_DATABASE) baseConfig['database'] = process.env.TEST_DATABASE;
