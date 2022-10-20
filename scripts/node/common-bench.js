@@ -28,10 +28,10 @@ let baseConfig = {
 };
 
 if (process.env.TEST_DB_HOST) baseConfig['host'] = process.env.TEST_DB_HOST;
-if (process.env.TEST_DB_USER) baseConfig['user'] = process.env.TEST_USER;
-if (process.env.TEST_DB_PASSWORD) baseConfig['password'] = process.env.TEST_PASSWORD;
-if (process.env.TEST_DB_DATABASE) baseConfig['database'] = process.env.TEST_DATABASE;
-if (process.env.TEST_DB_PORT) baseConfig['port'] = parseInt(process.env.TEST_PORT, 10);
+if (process.env.TEST_DB_USER) baseConfig['user'] = process.env.TEST_DB_USER;
+if (process.env.TEST_DB_PASSWORD) baseConfig['password'] = process.env.TEST_DB_PASSWORD;
+if (process.env.TEST_DB_DATABASE) baseConfig['database'] = process.env.TEST_DB_DATABASE;
+if (process.env.TEST_DB_PORT) baseConfig['port'] = parseInt(process.env.TEST_DB_PORT, 10);
 
 const config = Object.assign({}, baseConfig, { charsetNumber: 45, trace: false });
 console.log(config);
