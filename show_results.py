@@ -13,7 +13,7 @@ DO_1000 = "do 1000 parameters"
 BATCH_100 = "batch 100 insert of 100 chars"
 SELECT_1 = "select 1"
 SELECT_100 = "Select 100 int cols"
-SELECT_1000_ROWS = "SELECT 1000 rows"
+SELECT_1000_ROWS = "select 1000 rows"
 
 def around(x):
     if (x > 1000):

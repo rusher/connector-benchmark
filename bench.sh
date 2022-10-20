@@ -347,5 +347,6 @@ else
       launch_nodejs_bench
       ;;
   esac
+  python $PROJ_PATH/show_results.py
 fi
 
