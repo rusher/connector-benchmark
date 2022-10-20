@@ -13,7 +13,7 @@ from benchmark.select_1000_rows import select_1000_rows
 
 
 def run_test(tests, conn, paramstyle):
-    runner = pyperf.Runner(warmups=10, processes=1, min_time=1)
+    runner = pyperf.Runner(warmups=1000, processes=1, min_time=10)
     for test in tests:
         runner.bench_time_func(test['label'], test['method'], conn, paramstyle)
 
