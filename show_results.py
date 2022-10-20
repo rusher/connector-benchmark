@@ -1,10 +1,9 @@
 import json
 import os.path
-from math import log10, floor
 
 TEXT="TEXT"
 BINARY="BINARY"
-BINARY_CACHE="BINARY CLIENT CACHE"
+BINARY_EXECUTE_ONLY="BINARY EXECUTE ONLY"
 BINARY_PIPELINE="BINARY PIPELINE"
 BULK="BULK"
 REWRITE="REWRITE"
@@ -38,7 +37,7 @@ if(os.path.exists('./bench_results_java.json')):
             bench = DO_1000
         elif ".Insert_batch.binary" in i['benchmark']:
             bench = BATCH_100
-            type = BINARY_CACHE
+            type = BINARY_EXECUTE_ONLY
             if (i['params']['driver'] == "mariadb"):
                 type = BULK
         elif ".Insert_batch.rewrite" in i['benchmark']:
@@ -53,7 +52,7 @@ if(os.path.exists('./bench_results_java.json')):
             type = TEXT
         elif i['benchmark'].endswith(".Select_100_cols.binary"):
             bench = SELECT_100
-            type = BINARY_CACHE
+            type = BINARY_EXECUTE_ONLY
         elif ".Select_100_cols.binaryNoCache" in i['benchmark']:
             bench = SELECT_100
             type = BINARY_PIPELINE
@@ -65,7 +64,7 @@ if(os.path.exists('./bench_results_java.json')):
             type = TEXT
         elif ".Select_1000_Rows.binary" in i['benchmark']:
             bench = SELECT_1000_ROWS
-            type = BINARY_CACHE
+            type = BINARY_EXECUTE_ONLY
         if not bench in res:
             res[bench] = {}
         if not type in res[bench]:
@@ -103,7 +102,7 @@ def parseBenchResults(file, connType, language):
                     type = TEXT
                 elif "SELECT 100 int cols - BINARY execute only/" in i['name']:
                     bench = SELECT_100
-                    type = BINARY_CACHE
+                    type = BINARY_EXECUTE_ONLY
                 elif "SELECT 100 int cols - BINARY pipeline prepare+execute+close/" in i['name']:
                     bench = SELECT_100
                     type = BINARY_PIPELINE
@@ -166,7 +165,7 @@ if(os.path.exists('./bench_results_nodejs.json')):
                 type = TEXT
             elif benchType == 'select 100 int/varchar(32) - BINARY':
                 bench = SELECT_100
-                type = BINARY_CACHE
+                type = BINARY_EXECUTE_ONLY
             elif benchType == "select 1000 rows":
                 bench = SELECT_1000_ROWS
                 type = TEXT
