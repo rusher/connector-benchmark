@@ -56,6 +56,8 @@ if(os.path.exists('./bench_results_java.json')):
         elif ".Select_100_cols.binaryNoCache" in i['benchmark']:
             bench = SELECT_100
             type = BINARY_PIPELINE
+            if (i['params']['driver'] == "mysql"):
+                continue
         elif ".Select_100_cols.binaryNoPipeline" in i['benchmark']:
             bench = SELECT_100
             type = BINARY
@@ -179,6 +181,57 @@ if(os.path.exists('./bench_results_nodejs.json')):
                 res[bench][type]['node ' + curRes['name']] = val
     f.close()
 
+def parsePythonBenchResults(file, connType):
+    if(os.path.exists(file)):
+        f = open(file, 'r')
+        data = json.load(f)['benchmarks']
+
+        for i in data:
+            bench = ""
+            type = TEXT
+            val = 0
+            for tmpVal in i['runs'][1]['values']:
+                val += float(tmpVal)
+            length = len(i['runs'][1]['values'])
+            val = around(1 / (val / length))
+            if "DO 1" == i['metadata']['name']:
+                bench = DO_1
+            elif "BULK Insert" == i['metadata']['name']:
+                bench = BATCH_100
+                type = BULK
+                if (connType == "mysql"):
+                    type = BINARY
+            elif "select 1" == i['metadata']['name']:
+                bench = SELECT_1
+            elif "select_100_cols" == i['metadata']['name']:
+                bench = SELECT_100
+                type = TEXT
+            elif "select_1000_rows" == i['metadata']['name']:
+                bench = SELECT_1000_ROWS
+                type = TEXT
+            elif "select 1000 rows - BINARY" == i['metadata']['name']:
+                bench = SELECT_1000_ROWS
+                type = BINARY_EXECUTE_ONLY
+            elif "select_100_cols_execute" == i['metadata']['name']:
+                bench = SELECT_100
+                type = BINARY_EXECUTE_ONLY
+            elif "DO 1000 params" == i['metadata']['name']:
+                bench = DO_1000
+                type = BINARY_EXECUTE_ONLY
+            else:
+                print("bench not recognized : " + i['metadata']['name'])
+
+            if bench != "":
+                if not bench in res:
+                    res[bench] = {}
+                if not type in res[bench]:
+                    res[bench][type] = {}
+                res[bench][type]['python ' + connType] = val
+
+        f.close()
+
+parsePythonBenchResults("bench_results_python_mariadb_results.json", "mariadb")
+parsePythonBenchResults("bench_results_python_mysql_results.json", "mysql")
 
 
 
@@ -197,7 +250,10 @@ for connectorType in connectorTypes:
 print(header1)
 header = "{:53} |".format("")
 for connectorType in connectorTypes:
-    header = header + " {:12} |".format(connectorType)
+    v = connectorType
+    if (len(v) > 13):
+        v = v[0:12] + "."
+    header = header + " {:13}|".format(v)
 print(header)
 
 header1 = "{:54}|".format("".ljust(54,"-"))
@@ -223,4 +279,60 @@ for bench in res:
                 line = line + "{:6.0f} | {:4.0%} |".format(val, val / maxVal)
         print(line)
 print(header1)
-#print(res)
+
+result2 = {}
+for bench in res:
+    for type in res[bench]:
+        for connectorType in connectorTypes:
+            if (connectorType in res[bench][type]):
+                val = res[bench][type][connectorType]
+                if not bench in result2:
+                    result2[bench] = {}
+                if not connectorType in result2[bench]:
+                    result2[bench][connectorType] = val
+                else:
+                    currVal = result2[bench][connectorType]
+                    if (currVal < val):
+                        result2[bench][connectorType] = val
+
+
+print("")
+print("")
+print("agreggate results:")
+print("")
+
+header1 = "{:30} |".format("")
+for connectorType in connectorTypes:
+    header1 = header1 + "{:14}|".format("".ljust(14,"-"))
+print(header1)
+header = "{:30} |".format("")
+for connectorType in connectorTypes:
+    v = connectorType
+    if (len(v) > 13):
+        v = v[0:12] + "."
+    header = header + " {:13}|".format(v)
+print(header)
+
+header1 = "{:31}|".format("".ljust(31,"-"))
+for connectorType in connectorTypes:
+    header1 = header1 + "{:14}|".format("".ljust(14,"-"))
+print(header1)
+
+
+form = "{:30} |"
+
+for bench in result2:
+    maxVal = 0
+    for connectorType in result2[bench]:
+        if (result2[bench][connectorType] > maxVal):
+            maxVal = result2[bench][connectorType]
+    line = "{:30} |".format(bench)
+    for connectorType in connectorTypes:
+        if (not connectorType in result2[bench]):
+            line = line + "{:6.0} | {:4.0} |".format("", "")
+        else:
+            val = result2[bench][connectorType]
+            line = line + "{:6.0f} | {:4.0%} |".format(val, val / maxVal)
+    print(line)
+print(header1)
+

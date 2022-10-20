@@ -17,7 +17,7 @@ installation_java () {
 
 installation_c () {
   apt update
-  apt install -y build-essential cmake libssl-dev
+  apt install -y software-properties-common build-essential cmake libssl-dev
   mkdir -p $PROJ_PATH/repo
   cd $PROJ_PATH/repo
   if [[ -e "${PROJ_PATH}/repo/mariadb-connector-c/" ]]
@@ -27,7 +27,7 @@ installation_c () {
     git clone https://github.com/mariadb-corporation/mariadb-connector-c.git
   fi
 
-  mkdir $PROJ_PATH/repo/build-c
+  mkdir -p $PROJ_PATH/repo/build-c
   cd $PROJ_PATH/repo/build-c
   cmake ../mariadb-connector-c -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
   cmake --build . --config Release  --target install
@@ -37,7 +37,7 @@ installation_c () {
 
 installation_cpp () {
   apt update
-  apt install -y build-essential cmake libssl-dev
+  apt install -y software-properties-common build-essential cmake libssl-dev
   mkdir -p $PROJ_PATH/repo
   cd $PROJ_PATH/repo
   if [[ -e "${PROJ_PATH}/repo/mariadb-connector-cpp/" ]]
@@ -46,7 +46,7 @@ installation_cpp () {
   else
     git clone https://github.com/mariadb-corporation/mariadb-connector-cpp.git
   fi
-  mkdir $PROJ_PATH/repo/build-cpp
+  mkdir -p $PROJ_PATH/repo/build-cpp
   cd $PROJ_PATH/repo/build-cpp
   cmake ../mariadb-connector-cpp -DCONC_WITH_MSI=OFF -DCONC_WITH_UNIT_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DWITH_SSL=OPENSSL
   sudo cmake --build . --config Release  --target install
@@ -58,6 +58,27 @@ installation_cpp () {
   sudo ldconfig -l -v /usr/lib/libmariadbcpp.so || true
 
   sudo apt-get -y install libmysqlcppconn-dev
+}
+
+installation_python () {
+  apt update
+  apt install -y software-properties-common build-essential cmake libssl-dev python-is-python3
+  python --version
+  mkdir -p $PROJ_PATH/repo
+  cd $PROJ_PATH/repo
+  if [[ -e "${PROJ_PATH}/repo/mariadb-connector-python/" ]]
+  then
+    git pull
+  else
+    git clone https://github.com/mariadb-corporation/mariadb-connector-python.git
+  fi
+  cd $PROJ_PATH/repo/mariadb-connector-python
+  pip3 install --upgrade pip
+  pip3 install packaging
+  python setup.py build
+  python setup.py install
+  cd $PROJ_PATH/scripts/python
+  pip install mysql-connector-python pyperf
 }
 
 installation_benchmark () {
@@ -105,6 +126,17 @@ installation_nodejs () {
   npm install
 }
 
+installation_setup () {
+  apt update
+  apt install -y software-properties-common build-essential  python-is-python3
+  python --version
+  cd $PROJ_PATH/scripts/setup
+  pip3 install --upgrade pip
+  pip3 install packaging
+  pip install mysql-connector-python
+}
+
+
 ############################################################################
 ############################# launcher #####################################
 ############################################################################
@@ -113,6 +145,35 @@ launch_java_bench () {
   cd $PROJ_PATH/scripts/java
   mvn clean package
   java -Duser.country=US -Duser.language=en -jar target/benchmarks.jar -rf json -rff $PROJ_PATH/bench_results_java.json
+}
+
+launch_python_bench () {
+  cd $PROJ_PATH/scripts/python
+  if [ -n "$TYPE" ] ; then
+    case $TYPE in
+      mariadb)
+        rm -f $PROJ_PATH/bench_results_python_mariadb_results.json
+        export TEST_MODULE=mariadb
+        python bench.py -o $PROJ_PATH/bench_results_python_mariadb_results.json --inherit-environ=TEST_MODULE,TEST_DB_USER,TEST_DB_HOST,TEST_DB_DATABASE,TEST_DB_PORT,TEST_DB_PASSWORD --copy-env
+        ;;
+      mysql)
+        rm -f $PROJ_PATH/bench_results_python_mysql_results.json
+        export TEST_MODULE=mysql.connector
+        python bench.py -o $PROJ_PATH/bench_results_python_mysql_results.json --inherit-environ=TEST_MODULE,TEST_DB_USER,TEST_DB_HOST,TEST_DB_DATABASE,TEST_DB_PORT,TEST_DB_PASSWORD --copy-env
+        ;;
+      *)
+        echo "wrong value for type (parameter t) must be either mariadb or mysql. Provided:$TYPE"
+        exit 30
+        ;;
+    esac
+  else
+    rm -f $PROJ_PATH/bench_results_python_mariadb_results.json
+    export TEST_MODULE=mariadb
+    python bench.py -o $PROJ_PATH/bench_results_python_mariadb_results.json --inherit-environ=TEST_MODULE,TEST_DB_USER,TEST_DB_HOST,TEST_DB_DATABASE,TEST_DB_PORT,TEST_DB_PASSWORD --copy-env
+    rm -f $PROJ_PATH/bench_results_python_mysql_results.json
+    export TEST_MODULE=mysql.connector
+    python bench.py -o $PROJ_PATH/bench_results_python_mysql_results.json --inherit-environ=TEST_MODULE,TEST_DB_USER,TEST_DB_HOST,TEST_DB_DATABASE,TEST_DB_PORT,TEST_DB_PASSWORD --copy-env
+  fi
 }
 
 launch_c_bench () {
@@ -172,6 +233,12 @@ launch_nodejs_bench () {
   npm run benchmark
 }
 
+execute_setup () {
+  cd $PROJ_PATH/scripts/setup
+  python ./setup.py
+}
+
+
 ############################################################################
 ##############################" executor ##################################
 ############################################################################
@@ -181,7 +248,7 @@ echo "parsing parameters"
 
 INSTALLATION=false
 
-export TEST_DB_HOST=localhost
+export TEST_DB_HOST=127.0.0.1
 export TEST_DB_PORT=3306
 export TEST_DB_USER=root
 export TEST_DB_DATABASE=bench
@@ -216,40 +283,53 @@ echo "TEST_DB_PASSWORD: ${TEST_DB_PASSWORD}"
 if [ "$INSTALLATION" == "true" ] ; then
   case $LANGUAGE in
     java)
+      installation_setup
       installation_java
       ;;
+    python)
+      installation_setup
+      installation_c
+      installation_python
+      ;;
     c)
-      rm -rf $PROJ_PATH/repo
+      installation_setup
       installation_c
       installation_benchmark
       ;;
     cpp)
-      rm -rf $PROJ_PATH/repo
+      installation_setup
       installation_c
       installation_cpp
       installation_benchmark
       ;;
     node)
+      installation_setup
       installation_nodejs
       ;;
 
     *)
-      rm -rf $PROJ_PATH/repo
+      installation_setup
       installation_c
       installation_cpp
+      installation_python
       installation_benchmark
       installation_java
       installation_nodejs
       ;;
   esac
 else
+
+  execute_setup
+
   if [[ $LD_LIBRARY_PATH != *":/usr/local/lib"* ]]; then
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/mariadb
-    echo $LD_LIBRARY_PATH
   fi
   case $LANGUAGE in
     java)
       launch_java_bench
+      ;;
+    python)
+      launch_python_bench
       ;;
     c)
       launch_c_bench

@@ -286,21 +286,6 @@ BENCHMARK(BM_DO_1000_PARAMS)->Name(TYPE + " DO 1000 params")->ThreadRange(1, MAX
         }
         return result;
     }
-    static void setup_insert_batch(const benchmark::State& state) {
-      sql::Connection *conn = connect("");
-
-      sql::Statement *stmt;
-      stmt = conn->createStatement();
-      stmt->executeUpdate("DROP TABLE IF EXISTS perfTestTextBatch");
-      stmt->executeUpdate("INSTALL SONAME 'ha_blackhole'");
-      try {
-        stmt->executeUpdate("CREATE TABLE perfTestTextBatch (id MEDIUMINT NOT NULL AUTO_INCREMENT,t0 text, PRIMARY KEY (id)) COLLATE='utf8mb4_unicode_ci' ENGINE = BLACKHOLE");
-      } catch(sql::SQLException& e){
-        stmt->executeUpdate("CREATE TABLE perfTestTextBatch (id MEDIUMINT NOT NULL AUTO_INCREMENT,t0 text, PRIMARY KEY (id)) COLLATE='utf8mb4_unicode_ci'");
-      }
-      delete stmt;
-      delete conn;
-    }
 
     void insert_batch_with_prepare(benchmark::State& state, sql::Connection* conn) {
       std::string query = "INSERT INTO perfTestTextBatch(t0) VALUES (?)";
@@ -358,9 +343,9 @@ BENCHMARK(BM_DO_1000_PARAMS)->Name(TYPE + " DO 1000 params")->ThreadRange(1, MAX
       state.counters[OPERATION_PER_SECOND_LABEL] = benchmark::Counter(numOperation, benchmark::Counter::kIsRate);
       delete conn;
     }
-    BENCHMARK(BM_INSERT_BATCH_WITH_PREPARE)->Name(TYPE + " insert batch looping execute")->ThreadRange(1, MAX_THREAD)->UseRealTime()->Setup(setup_insert_batch);
-    BENCHMARK(BM_INSERT_BATCH_CLIENT_REWRITE)->Name(TYPE + " insert batch client rewrite")->ThreadRange(1, MAX_THREAD)->UseRealTime()->Setup(setup_insert_batch);
-    BENCHMARK(BM_INSERT_BATCH_BULK)->Name(TYPE + " insert batch using bulk")->ThreadRange(1, MAX_THREAD)->UseRealTime()->Setup(setup_insert_batch);
+    BENCHMARK(BM_INSERT_BATCH_WITH_PREPARE)->Name(TYPE + " insert batch looping execute")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+    BENCHMARK(BM_INSERT_BATCH_CLIENT_REWRITE)->Name(TYPE + " insert batch client rewrite")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+    BENCHMARK(BM_INSERT_BATCH_BULK)->Name(TYPE + " insert batch using bulk")->ThreadRange(1, MAX_THREAD)->UseRealTime();
 
 #endif
 

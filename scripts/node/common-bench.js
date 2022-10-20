@@ -44,11 +44,6 @@ const createBenchSuite = async (bench, res) => {
   results = res;
   const reportData = [];
   const sources = await loadsources(bench.requiresPool, bench.requireExecute, bench.mariadbOnly);
-  if (bench.initFct) {
-    const conn = await mariadb.createConnection(config);
-    await bench.initFct(conn);
-    conn.end();
-  }
 
   const suite = new Benchmark.Suite('test');
   suite.add('warmup', {

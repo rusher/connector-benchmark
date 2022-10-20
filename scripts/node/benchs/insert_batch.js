@@ -39,20 +39,3 @@ module.exports.benchFct = async function (conn, type, deferred) {
   }
 };
 
-module.exports.initFct = async function (conn) {
-  const sqlTable =
-    "CREATE TABLE perfTestTextBatch (id MEDIUMINT NOT NULL AUTO_INCREMENT,t0 text, PRIMARY KEY (id)) COLLATE='utf8mb4_unicode_ci'";
-  try {
-    await Promise.all([
-      conn.query('DROP TABLE IF EXISTS perfTestTextBatch'),
-      conn.query("INSTALL SONAME 'ha_blackhole'"),
-      conn.query(sqlTable + ' ENGINE = BLACKHOLE')
-    ]);
-  } catch (err) {
-    await Promise.all([conn.query('DROP TABLE IF EXISTS perfTestTextBatch'), conn.query(sqlTable)]);
-  }
-};
-
-module.exports.onComplete = async function (conn) {
-  await conn.query('TRUNCATE TABLE perfTestTextBatch');
-};
