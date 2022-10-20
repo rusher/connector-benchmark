@@ -96,6 +96,7 @@ installation_nodejs () {
     git pull
   else
     git clone https://github.com/mariadb-corporation/mariadb-connector-nodejs.git
+    git checkout develop
   fi
   cd mariadb-connector-nodejs
   npm install
