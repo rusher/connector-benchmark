@@ -93,12 +93,13 @@ installation_nodejs () {
   cd $PROJ_PATH/repo
   if [[ -e "${PROJ_PATH}/repo/mariadb-connector-nodejs/" ]]
   then
+    cd mariadb-connector-nodejs
     git pull
   else
     git clone https://github.com/mariadb-corporation/mariadb-connector-nodejs.git
+    cd mariadb-connector-nodejs
     git checkout develop
   fi
-  cd mariadb-connector-nodejs
   npm install
   cd $PROJ_PATH/scripts/node
   npm install
