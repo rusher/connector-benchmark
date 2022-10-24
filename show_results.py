@@ -171,6 +171,9 @@ if(os.path.exists('./bench_results_nodejs.json')):
             elif benchType == "select 1000 rows":
                 bench = SELECT_1000_ROWS
                 type = TEXT
+            elif benchType == "select 1000 rows - BINARY":
+                bench = SELECT_1000_ROWS
+                type = BINARY_EXECUTE_ONLY
             else:
                 print("bench not recognized : " + benchType)
             if bench != '':
