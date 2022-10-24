@@ -347,6 +347,7 @@ else
       launch_nodejs_bench
       ;;
   esac
-  python $PROJ_PATH/show_results.py
+  cd $PROJ_PATH
+  python3 ./show_results.py
 fi
 
