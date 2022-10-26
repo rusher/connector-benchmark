@@ -42,6 +42,11 @@ try:
 except Error:
     pass
 cursor.execute("CREATE TABLE perfTestTextBatch (id MEDIUMINT NOT NULL AUTO_INCREMENT,t0 text, PRIMARY KEY (id)) COLLATE='utf8mb4_unicode_ci' ENGINE = BLACKHOLE")
+cursor.execute("DROP TABLE IF EXISTS 1000rows")
+cursor.execute("CREATE TABLE 1000rows(id INT not null primary key auto_increment, val VARCHAR(32))")
+for i in range(0, 1000):
+    cursor.execute("INSERT INTO 1000rows(val) VALUES (%s) ", ["abcdefghijabcdefghijabcdefghijaa"])
+
 
 conn.commit()
 conn.close()

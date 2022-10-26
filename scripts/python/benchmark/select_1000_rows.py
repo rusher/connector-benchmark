@@ -9,7 +9,7 @@ def select_1000_rows(loops, conn, paramstyle):
     t0 = pyperf.perf_counter()
     for value in range_it:
         cursor = conn.cursor()
-        cursor.execute("select seq, 'abcdefghijabcdefghijabcdefghijaa' from seq_1_to_1000")
+        cursor.execute("select * from 1000rows")
         rows = cursor.fetchall()
         del cursor, rows
     return pyperf.perf_counter() - t0

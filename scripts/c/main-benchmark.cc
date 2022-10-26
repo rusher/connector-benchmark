@@ -161,7 +161,7 @@ BENCHMARK(BM_SELECT_1)->Name(TYPE + " SELECT 1")->ThreadRange(1, MAX_THREAD)->Us
 
 
 void select_1000_rows(benchmark::State& state, MYSQL* conn) {
-    if (mysql_query(conn, "select seq, 'abcdefghijabcdefghijabcdefghijaa' from seq_1_to_1000")) {
+    if (mysql_query(conn, "select * from 1000rows")) {
           fprintf(stderr, "%s\n", mysql_error(conn));
           mysql_close(conn);
           exit(1);

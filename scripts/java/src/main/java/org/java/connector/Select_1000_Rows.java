@@ -11,7 +11,7 @@ import org.openjdk.jmh.annotations.Benchmark;
 
 public class Select_1000_Rows extends Common {
   private static final String sql =
-      "select seq, 'abcdefghijabcdefghijabcdefghijaa' from seq_1_to_1000";
+      "select * from 1000rows";
 
   @Benchmark
   public int text(MyState state) throws Throwable {

@@ -147,7 +147,7 @@ void select_1000_rows(benchmark::State& state, sql::Connection* conn) {
     stmt = conn->createStatement();
     // stmt->setFetchSize(1); => error if set
     // Execute query
-    res = stmt->executeQuery("select seq, 'abcdefghijabcdefghijabcdefghijaa' from seq_1_to_1000");
+    res = stmt->executeQuery("select * from 1000rows");
 
     // Loop through results
     int val1;
