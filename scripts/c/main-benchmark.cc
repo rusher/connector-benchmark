@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-const int MAX_THREAD = atoi(GetEnvironmentVariableOrDefault("TEST_DB_THREAD", "1"));
 #define OPERATION_PER_SECOND_LABEL "nb operations per second"
 
 std::string GetEnvironmentVariableOrDefault(const std::string& variable_name,
@@ -15,6 +14,7 @@ std::string GetEnvironmentVariableOrDefault(const std::string& variable_name,
     return value ? value : default_value;
 }
 
+const int MAX_THREAD = atoi(getenv("TEST_DB_THREAD") ? getenv("TEST_DB_THREAD") : "1");
 std::string DB_PORT = GetEnvironmentVariableOrDefault("TEST_DB_PORT", "3306");
 std::string DB_DATABASE = GetEnvironmentVariableOrDefault("TEST_DB_DATABASE", "bench");
 std::string DB_USER = GetEnvironmentVariableOrDefault("TEST_DB_USER", "root");

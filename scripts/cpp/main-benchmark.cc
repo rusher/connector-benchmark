@@ -4,7 +4,7 @@
 #include <cstring>
 #include <stdlib.h>
 
-const int MAX_THREAD = 1;
+
 #define OPERATION_PER_SECOND_LABEL "nb operations per second"
 
 std::string GetEnvironmentVariableOrDefault(const std::string& variable_name,
@@ -13,7 +13,7 @@ std::string GetEnvironmentVariableOrDefault(const std::string& variable_name,
     const char* value = getenv(variable_name.c_str());
     return value ? value : default_value;
 }
-
+const int MAX_THREAD = atoi(getenv("TEST_DB_THREAD") ? getenv("TEST_DB_THREAD") : "1");
 std::string DB_PORT = GetEnvironmentVariableOrDefault("TEST_DB_PORT", "3306");
 std::string DB_DATABASE = GetEnvironmentVariableOrDefault("TEST_DB_DATABASE", "bench");
 std::string DB_USER = GetEnvironmentVariableOrDefault("TEST_DB_USER", "root");
@@ -100,7 +100,7 @@ static void BM_DO_1(benchmark::State& state) {
   delete conn;
 }
 
-BENCHMARK(BM_DO_1)->Name(TYPE + " DO 1")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_DO_1)->Name(TYPE + " DO 1")->Threads(MAX_THREAD)->UseRealTime();
 
 int select_1(benchmark::State& state, sql::Connection* conn) {
     int val;
@@ -136,7 +136,7 @@ static void BM_SELECT_1(benchmark::State& state) {
   delete conn;
 }
 
-BENCHMARK(BM_SELECT_1)->Name(TYPE + " SELECT 1")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_SELECT_1)->Name(TYPE + " SELECT 1")->Threads(MAX_THREAD)->UseRealTime();
 
 void select_1000_rows(benchmark::State& state, sql::Connection* conn) {
   try {
@@ -175,7 +175,7 @@ static void BM_SELECT_1000_ROWS(benchmark::State& state) {
   delete conn;
 }
 
-BENCHMARK(BM_SELECT_1000_ROWS)->Name(TYPE + " SELECT 1000 rows (int + char(32))")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_SELECT_1000_ROWS)->Name(TYPE + " SELECT 1000 rows (int + char(32))")->Threads(MAX_THREAD)->UseRealTime();
 
 static void setup_select_100_cols(const benchmark::State& state) {
   sql::Connection *conn = connect("");
@@ -235,9 +235,9 @@ static void BM_SELECT_100_COLS_SRV_PREPARED(benchmark::State& state) {
   delete conn;
 }
 
-BENCHMARK(BM_SELECT_100_COLS)->Name(TYPE + " SELECT 100 int cols")->ThreadRange(1, MAX_THREAD)->UseRealTime()->Setup(setup_select_100_cols);
+BENCHMARK(BM_SELECT_100_COLS)->Name(TYPE + " SELECT 100 int cols")->Threads(MAX_THREAD)->UseRealTime()->Setup(setup_select_100_cols);
 #ifndef MYSQL
-BENCHMARK(BM_SELECT_100_COLS_SRV_PREPARED)->Name(TYPE + " SELECT 100 int cols - BINARY prepare+execute+close")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_SELECT_100_COLS_SRV_PREPARED)->Name(TYPE + " SELECT 100 int cols - BINARY prepare+execute+close")->Threads(MAX_THREAD)->UseRealTime();
 #endif
 
 
@@ -273,7 +273,7 @@ static void BM_DO_1000_PARAMS(benchmark::State& state) {
   delete conn;
 }
 
-BENCHMARK(BM_DO_1000_PARAMS)->Name(TYPE + " DO 1000 params")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_DO_1000_PARAMS)->Name(TYPE + " DO 1000 params")->Threads(MAX_THREAD)->UseRealTime();
 
 #ifndef MYSQL
 
@@ -343,9 +343,9 @@ BENCHMARK(BM_DO_1000_PARAMS)->Name(TYPE + " DO 1000 params")->ThreadRange(1, MAX
       state.counters[OPERATION_PER_SECOND_LABEL] = benchmark::Counter(numOperation, benchmark::Counter::kIsRate);
       delete conn;
     }
-    BENCHMARK(BM_INSERT_BATCH_WITH_PREPARE)->Name(TYPE + " insert batch looping execute")->ThreadRange(1, MAX_THREAD)->UseRealTime();
-    BENCHMARK(BM_INSERT_BATCH_CLIENT_REWRITE)->Name(TYPE + " insert batch client rewrite")->ThreadRange(1, MAX_THREAD)->UseRealTime();
-    BENCHMARK(BM_INSERT_BATCH_BULK)->Name(TYPE + " insert batch using bulk")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+    BENCHMARK(BM_INSERT_BATCH_WITH_PREPARE)->Name(TYPE + " insert batch looping execute")->Threads(MAX_THREAD)->UseRealTime();
+    BENCHMARK(BM_INSERT_BATCH_CLIENT_REWRITE)->Name(TYPE + " insert batch client rewrite")->Threads(MAX_THREAD)->UseRealTime();
+    BENCHMARK(BM_INSERT_BATCH_BULK)->Name(TYPE + " insert batch using bulk")->Threads(MAX_THREAD)->UseRealTime();
 
 #endif
 
