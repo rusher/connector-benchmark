@@ -68,9 +68,9 @@ installation_python () {
   cd $PROJ_PATH/repo
   if [[ -e "${PROJ_PATH}/repo/mariadb-connector-python/" ]]
   then
-    git pull
+    sudo git pull
   else
-    git clone https://github.com/mariadb-corporation/mariadb-connector-python.git
+    sudo git clone https://github.com/mariadb-corporation/mariadb-connector-python.git
   fi
   cd $PROJ_PATH/repo/mariadb-connector-python
   pip3 install --upgrade pip

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-const int MAX_THREAD = 1;
+const int MAX_THREAD = atoi(GetEnvironmentVariableOrDefault("TEST_DB_THREAD", "1"));
 #define OPERATION_PER_SECOND_LABEL "nb operations per second"
 
 std::string GetEnvironmentVariableOrDefault(const std::string& variable_name,
@@ -115,7 +115,7 @@ static void BM_DO_1(benchmark::State& state) {
   mysql_close(conn);
 }
 
-BENCHMARK(BM_DO_1)->Name(TYPE + " DO 1")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_DO_1)->Name(TYPE + " DO 1")->Threads(MAX_THREAD)->UseRealTime();
 
 
 
@@ -156,7 +156,7 @@ static void BM_SELECT_1(benchmark::State& state) {
   mysql_close(conn);
 }
 
-BENCHMARK(BM_SELECT_1)->Name(TYPE + " SELECT 1")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_SELECT_1)->Name(TYPE + " SELECT 1")->Threads(MAX_THREAD)->UseRealTime();
 
 
 
@@ -198,7 +198,7 @@ static void BM_SELECT_1000_ROWS(benchmark::State& state) {
   mysql_close(conn);
 }
 
-BENCHMARK(BM_SELECT_1000_ROWS)->Name(TYPE + " SELECT 1000 rows (int + char(32))")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_SELECT_1000_ROWS)->Name(TYPE + " SELECT 1000 rows (int + char(32))")->Threads(MAX_THREAD)->UseRealTime();
 
 void select_100_int_cols(benchmark::State& state, MYSQL* conn) {
     int rc;
@@ -329,9 +329,9 @@ static void BM_SELECT_100_INT_COLS_PREPARED(benchmark::State& state) {
   mysql_close(conn);
 }
 
-BENCHMARK(BM_SELECT_100_INT_COLS)->Name(TYPE + " SELECT 100 int cols")->ThreadRange(1, MAX_THREAD)->UseRealTime();
-BENCHMARK(BM_SELECT_100_INT_COLS_WITH_PREPARE)->Name(TYPE + " SELECT 100 int cols - BINARY prepare+execute+close")->ThreadRange(1, MAX_THREAD)->UseRealTime();
-BENCHMARK(BM_SELECT_100_INT_COLS_PREPARED)->Name(TYPE + " SELECT 100 int cols - BINARY execute only")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_SELECT_100_INT_COLS)->Name(TYPE + " SELECT 100 int cols")->Threads(MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_SELECT_100_INT_COLS_WITH_PREPARE)->Name(TYPE + " SELECT 100 int cols - BINARY prepare+execute+close")->Threads(MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_SELECT_100_INT_COLS_PREPARED)->Name(TYPE + " SELECT 100 int cols - BINARY execute only")->Threads(MAX_THREAD)->UseRealTime();
 
 
 
@@ -363,7 +363,7 @@ static void BM_DO_1000_PARAMS(benchmark::State& state) {
   mysql_close(conn);
 }
 
-BENCHMARK(BM_DO_1000_PARAMS)->Name(TYPE + " DO 1000 params")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_DO_1000_PARAMS)->Name(TYPE + " DO 1000 params")->Threads(MAX_THREAD)->UseRealTime();
 
 
 
@@ -416,7 +416,7 @@ static void BM_INSERT_BATCH_WITH_PREPARE(benchmark::State& state) {
   mysql_close(conn);
 }
 
-BENCHMARK(BM_INSERT_BATCH_WITH_PREPARE)->Name(TYPE + " insert batch looping execute")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_INSERT_BATCH_WITH_PREPARE)->Name(TYPE + " insert batch looping execute")->Threads(MAX_THREAD)->UseRealTime();
 
 #ifndef BENCHMARK_MYSQL
 
@@ -467,7 +467,7 @@ BENCHMARK(BM_INSERT_BATCH_WITH_PREPARE)->Name(TYPE + " insert batch looping exec
     mysql_stmt_close(stmt);
     mysql_close(conn);
   }
-  BENCHMARK(BM_INSERT_BULK_BATCH_WITH_PREPARE)->Name(TYPE + " insert batch using bulk")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+  BENCHMARK(BM_INSERT_BULK_BATCH_WITH_PREPARE)->Name(TYPE + " insert batch using bulk")->Threads(MAX_THREAD)->UseRealTime();
 
   void select_100_int_cols_with_prepare_pipeline(benchmark::State& state, MYSQL* conn) {
     MYSQL_STMT *stmt = mysql_stmt_init(conn);
@@ -514,7 +514,7 @@ BENCHMARK(BM_INSERT_BATCH_WITH_PREPARE)->Name(TYPE + " insert batch looping exec
     mysql_close(conn);
   }
 
-  BENCHMARK(BM_SELECT_100_INT_COLS_WITH_PREPARE_PIPELINE)->Name(TYPE + " SELECT 100 int cols - BINARY pipeline prepare+execute+close")->ThreadRange(1, MAX_THREAD)->UseRealTime();
+  BENCHMARK(BM_SELECT_100_INT_COLS_WITH_PREPARE_PIPELINE)->Name(TYPE + " SELECT 100 int cols - BINARY pipeline prepare+execute+close")->Threads(MAX_THREAD)->UseRealTime();
 
 #endif
 
