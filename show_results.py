@@ -84,7 +84,7 @@ def parseBenchResults(file, connType, language):
             bench = ""
             type = TEXT
 
-            if "1_mean" in i['name']:
+            if os.getenv("TEST_DB_THREAD", default="1") + "_mean" in i['name']:
                 val = around(float(i['nb operations per second']))
                 if "DO 1/" in i['name']:
                     bench = DO_1
