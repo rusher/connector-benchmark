@@ -253,6 +253,7 @@ export TEST_DB_PORT=3306
 export TEST_DB_USER=root
 export TEST_DB_DATABASE=bench
 export TEST_OTHER=
+export TEST_DB_THREAD=1
 
 while getopts ":l:t:ip:h:d:u:w:" flag; do
   case "${flag}" in
