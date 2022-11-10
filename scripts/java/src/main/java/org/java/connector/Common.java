@@ -10,8 +10,6 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.*;
 
-
-
 @State(Scope.Benchmark)
 @Warmup(iterations = 10, timeUnit = TimeUnit.SECONDS, time = 1)
 @Measurement(iterations = 10, timeUnit = TimeUnit.SECONDS, time = 1)
@@ -28,9 +26,10 @@ public class Common {
   public static final String password = getEnv("TEST_DB_PASSWORD", "");
   public static final String database = getEnv("TEST_DB_DATABASE", "testj");
   public static final String other = getEnv("TEST_DB_OTHER", "");
+  public static final boolean useSSL = Boolean.parseBoolean(getEnv("TEST_USE_SSL", "false"));
 
   public static String getEnv(String key, String defaultValue) {
-    String env =  System.getenv(key);
+    String env = System.getenv(key);
     if (env != null) return env;
     return defaultValue;
   }
@@ -66,13 +65,33 @@ public class Common {
       }
       try {
         String jdbcBase =
-            "jdbc:%s://%s:%s/%s?user=%s&password=%s&sslMode=DISABLED&useServerPrepStmts=%s&cachePrepStmts=%s&serverTimezone=UTC%s";
+            "jdbc:%s://%s:%s/%s?user=%s&password=%s&sslMode=%s&useServerPrepStmts=%s&cachePrepStmts=%s&serverTimezone=UTC%s";
         String jdbcUrlText =
             String.format(
-                jdbcBase, driver, host, port, database, username, password, false, false, other);
+                jdbcBase,
+                driver,
+                host,
+                port,
+                database,
+                username,
+                password,
+                useSSL ? "REQUIRED" : "DISABLED",
+                false,
+                false,
+                other);
         String jdbcUrlBinary =
             String.format(
-                jdbcBase, driver, host, port, database, username, password, true, true, other);
+                jdbcBase,
+                driver,
+                host,
+                port,
+                database,
+                username,
+                password,
+                useSSL ? "REQUIRED" : "DISABLED",
+                true,
+                true,
+                other);
 
         connectionText =
             ((java.sql.Driver) Class.forName(className).getDeclaredConstructor().newInstance())
@@ -86,6 +105,7 @@ public class Common {
                 database,
                 username,
                 password,
+                useSSL ? "REQUIRED" : "DISABLED",
                 false,
                 false,
                 "&rewriteBatchedStatements=true&useBulkStmts=false" + other);
@@ -105,6 +125,7 @@ public class Common {
                 database,
                 username,
                 password,
+                useSSL ? "REQUIRED" : "DISABLED",
                 true,
                 false,
                 "&prepStmtCacheSize=0" + other);
@@ -122,6 +143,7 @@ public class Common {
                 database,
                 username,
                 password,
+                useSSL ? "REQUIRED" : "DISABLED",
                 true,
                 true,
                 "&prepStmtCacheSize=0&cachePrepStmts=false&disablePipeline=true" + other);

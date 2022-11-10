@@ -40,6 +40,11 @@ public class Insert_batch extends Common {
     return run(state.connectionTextRewrite);
   }
 
+  @Benchmark
+  public int[] text(MyState state) throws Throwable {
+    return run(state.connectionText);
+  }
+
   private int[] run(Connection con) throws Throwable {
     String s = randomString(100);
     try (PreparedStatement prep =

@@ -247,7 +247,7 @@ export PROJ_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pw
 echo "parsing parameters"
 
 INSTALLATION=false
-
+export TEST_USE_SSL=false
 export TEST_DB_HOST=127.0.0.1
 export TEST_DB_PORT=3306
 export TEST_DB_USER=root
@@ -255,11 +255,12 @@ export TEST_DB_DATABASE=bench
 export TEST_OTHER=
 export TEST_DB_THREAD=1
 
-while getopts ":l:t:ip:h:d:u:w:" flag; do
+while getopts ":l:t:isp:h:d:u:w:" flag; do
   case "${flag}" in
     l) export LANGUAGE=${OPTARG};;
     t) export TYPE=${OPTARG};;
     i) INSTALLATION=true;;
+    s) export TEST_USE_SSL=true;;
     p) export TEST_DB_PORT=${OPTARG};;
     h) export TEST_DB_HOST=${OPTARG};;
     d) export TEST_DB_DATABASE=${OPTARG};;
@@ -277,6 +278,7 @@ echo "TEST_DB_PORT: ${TEST_DB_PORT}"
 echo "TEST_DB_USER: ${TEST_DB_USER}"
 echo "TEST_DB_DATABASE: ${TEST_DB_DATABASE}"
 echo "TEST_DB_PASSWORD: ${TEST_DB_PASSWORD}"
+echo "TEST_USE_SSL: ${TEST_USE_SSL}"
 
 
 

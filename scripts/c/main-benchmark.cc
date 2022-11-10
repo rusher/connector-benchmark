@@ -20,6 +20,7 @@ std::string DB_DATABASE = GetEnvironmentVariableOrDefault("TEST_DB_DATABASE", "b
 std::string DB_USER = GetEnvironmentVariableOrDefault("TEST_DB_USER", "root");
 std::string DB_HOST = GetEnvironmentVariableOrDefault("TEST_DB_HOST", "127.0.0.1");
 std::string DB_PASSWORD = GetEnvironmentVariableOrDefault("TEST_DB_PASSWORD", "");
+bool DB_SSL = GetEnvironmentVariableOrDefault("TEST_USE_SSL", "false") == "true";
 
 #define check_conn_rc(rc, mysql) \
 do {\
@@ -57,6 +58,14 @@ MYSQL* connect(std::string options) {
 
   enum mysql_protocol_type prot_type= MYSQL_PROTOCOL_TCP;
   mysql_optionsv(con, MYSQL_OPT_PROTOCOL, (void *)&prot_type);
+  if (DB_SSL) {
+    mysql_ssl_set(con,
+                  NULL,
+                  NULL,
+                  NULL,
+                  NULL,
+                  NULL);
+  }
 
   if (mysql_real_connect(con, DB_HOST.c_str(), DB_USER.c_str(), DB_PASSWORD.c_str(),
           DB_DATABASE.c_str(), atoi(DB_PORT.c_str()), NULL, 0) == NULL) {
@@ -82,7 +91,14 @@ MYSQL* connect(std::string options) {
 
   enum mysql_protocol_type prot_type= MYSQL_PROTOCOL_TCP;
   mysql_options(con, MYSQL_OPT_PROTOCOL, (void *)&prot_type);
-
+  if (DB_SSL) {
+    mysql_ssl_set(con,
+                  NULL,
+                  NULL,
+                  NULL,
+                  NULL,
+                  NULL);
+  }
   if (mysql_real_connect(con, DB_HOST.c_str(), DB_USER.c_str(), DB_PASSWORD.c_str(),
           DB_DATABASE.c_str(), atoi(DB_PORT.c_str()), NULL, 0) == NULL) {
       fprintf(stderr, "%s\n", mysql_error(con));

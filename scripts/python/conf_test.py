@@ -21,4 +21,7 @@ def conf():
     }
     if os.environ.get('TEST_DB_PASSWORD'):
         d["password"] = os.environ.get('TEST_DB_PASSWORD')
+    if os.environ.get('TEST_USE_SSL', 'false')  == "true":
+        d["ssl"] = True
+
     return d

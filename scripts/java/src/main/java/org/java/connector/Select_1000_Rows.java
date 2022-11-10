@@ -10,8 +10,7 @@ import java.sql.ResultSet;
 import org.openjdk.jmh.annotations.Benchmark;
 
 public class Select_1000_Rows extends Common {
-  private static final String sql =
-      "select * from 1000rows";
+  private static final String sql = "select * from 1000rows";
 
   @Benchmark
   public int text(MyState state) throws Throwable {

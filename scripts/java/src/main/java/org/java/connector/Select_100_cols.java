@@ -12,7 +12,15 @@ public class Select_100_cols extends Common {
 
   @Benchmark
   public int[] text(MyState state) throws Throwable {
-    return run(state.connectionText);
+    try (PreparedStatement prep = state.connectionText.prepareStatement("select * FROM test100")) {
+      ResultSet rs = prep.executeQuery();
+      rs.next();
+      int[] objs = new int[100];
+      for (int i = 0; i < 100; i++) {
+        objs[i] = rs.getInt(i + 1);
+      }
+      return objs;
+    }
   }
 
   @Benchmark

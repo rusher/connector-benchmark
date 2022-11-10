@@ -45,6 +45,9 @@ if(os.path.exists('./bench_results_java.json')):
             type = REWRITE
             if (i['params']['driver'] == "mariadb"):
                  type = TEXT
+        elif ".Insert_batch.text" in i['benchmark']:
+            bench = BATCH_100
+            type = TEXT
         elif ".Select_1." in i['benchmark']:
             bench = SELECT_1
         elif ".Select_100_cols.text" in i['benchmark']:

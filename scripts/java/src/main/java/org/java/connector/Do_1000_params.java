@@ -4,7 +4,6 @@
 
 package org.java.connector;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import org.openjdk.jmh.annotations.Benchmark;
 
@@ -22,17 +21,7 @@ public class Do_1000_params extends Common {
 
   @Benchmark
   public int text(MyState state) throws Throwable {
-    return run(state.connectionText);
-  }
-
-  //    @Benchmark
-  //    public int binary(MyState state) throws Throwable {
-  //        return run(state.connectionBinary);
-  //    }
-
-  private int run(Connection con) throws Throwable {
-
-    try (PreparedStatement st = con.prepareStatement(sql)) {
+    try (PreparedStatement st = state.connectionText.prepareStatement(sql)) {
       for (int i = 1; i <= 1000; i++) {
         st.setInt(i, i);
       }

@@ -19,6 +19,7 @@ std::string DB_DATABASE = GetEnvironmentVariableOrDefault("TEST_DB_DATABASE", "b
 std::string DB_USER = GetEnvironmentVariableOrDefault("TEST_DB_USER", "root");
 std::string DB_HOST = GetEnvironmentVariableOrDefault("TEST_DB_HOST", "localhost");
 std::string DB_PASSWORD = GetEnvironmentVariableOrDefault("TEST_DB_PASSWORD", "");
+bool DB_SSL = GetEnvironmentVariableOrDefault("TEST_USE_SSL", "false") == "true";
 
 #ifndef MYSQL
     #include <mariadb/conncpp.hpp>
@@ -32,7 +33,7 @@ sql::Connection* connect(std::string options) {
         driver = sql::mariadb::get_driver_instance();
 
          // Establish Connection
-         con = driver->connect("tcp://" + DB_HOST + ":" + DB_PORT + "/" + DB_DATABASE + options, DB_USER, DB_PASSWORD);
+         con = driver->connect("tcp://" + DB_HOST + ":" + DB_PORT + "/" + DB_DATABASE  + (DB_SSL ? "?useTls=true" : "?") + options, DB_USER, DB_PASSWORD);
          return con;
 
      } catch(sql::SQLException& e){
@@ -63,7 +64,7 @@ sql::Connection* connect(std::string options) {
         // Configure Connection
 
          // Establish Connection
-         con = driver->connect("tcp://" + DB_HOST + ":" + DB_PORT + "/" + DB_DATABASE + options, DB_USER, DB_PASSWORD);
+         con = driver->connect("tcp://" + DB_HOST + ":" + DB_PORT + "/" + DB_DATABASE  + (DB_SSL ? "?useTls=true" : "?") + options, DB_USER, DB_PASSWORD);
          return con;
 
      } catch(sql::SQLException& e){
@@ -225,7 +226,7 @@ static void BM_SELECT_100_COLS(benchmark::State& state) {
   delete conn;
 }
 static void BM_SELECT_100_COLS_SRV_PREPARED(benchmark::State& state) {
-  sql::Connection *conn = connect("?useServerPrepStmts=true");
+  sql::Connection *conn = connect("&useServerPrepStmts=true");
   int numOperation = 0;
   for (auto _ : state) {
     select_100_cols(state, conn);
@@ -312,7 +313,7 @@ BENCHMARK(BM_DO_1000_PARAMS)->Name(TYPE + " DO 1000 params")->Threads(MAX_THREAD
     }
 
     static void BM_INSERT_BATCH_BULK(benchmark::State& state) {
-      sql::Connection *conn = connect("?useBulkStmts=true");
+      sql::Connection *conn = connect("&useBulkStmts=true");
       int numOperation = 0;
       for (auto _ : state) {
         insert_batch_with_prepare(state, conn);
@@ -323,7 +324,7 @@ BENCHMARK(BM_DO_1000_PARAMS)->Name(TYPE + " DO 1000 params")->Threads(MAX_THREAD
     }
 
     static void BM_INSERT_BATCH_CLIENT_REWRITE(benchmark::State& state) {
-      sql::Connection *conn = connect("?rewriteBatchedStatements=true");
+      sql::Connection *conn = connect("&rewriteBatchedStatements=true");
       int numOperation = 0;
       for (auto _ : state) {
         insert_batch_with_prepare(state, conn);
@@ -334,7 +335,7 @@ BENCHMARK(BM_DO_1000_PARAMS)->Name(TYPE + " DO 1000 params")->Threads(MAX_THREAD
     }
 
     static void BM_INSERT_BATCH_WITH_PREPARE(benchmark::State& state) {
-      sql::Connection *conn = connect("?useServerPrepStmts=true");
+      sql::Connection *conn = connect("&useServerPrepStmts=true");
       int numOperation = 0;
       for (auto _ : state) {
         insert_batch_with_prepare(state, conn);
