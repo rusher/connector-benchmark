@@ -98,7 +98,11 @@ MYSQL* connect(std::string options) {
                   NULL,
                   NULL,
                   NULL);
+  } else {
+    enum mysql_ssl_mode ssl_mode = SSL_MODE_DISABLED;
+    mysql_options(con, MYSQL_OPT_SSL_MODE, &ssl_mode);
   }
+
   if (mysql_real_connect(con, DB_HOST.c_str(), DB_USER.c_str(), DB_PASSWORD.c_str(),
           DB_DATABASE.c_str(), atoi(DB_PORT.c_str()), NULL, 0) == NULL) {
       fprintf(stderr, "%s\n", mysql_error(con));
