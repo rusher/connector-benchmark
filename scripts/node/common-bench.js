@@ -32,7 +32,7 @@ if (process.env.TEST_DB_USER) baseConfig['user'] = process.env.TEST_DB_USER;
 if (process.env.TEST_DB_PASSWORD) baseConfig['password'] = process.env.TEST_DB_PASSWORD;
 if (process.env.TEST_DB_DATABASE) baseConfig['database'] = process.env.TEST_DB_DATABASE;
 if (process.env.TEST_DB_PORT) baseConfig['port'] = parseInt(process.env.TEST_DB_PORT, 10);
-if (process.env.TEST_USE_SSL && Boolean(process.env.TEST_USE_SSL)) baseConfig['ssl'] = { rejectUnauthorized: false };
+if (process.env.TEST_USE_SSL && process.env.TEST_USE_SSL === 'true') baseConfig['ssl'] = { rejectUnauthorized: false };
 
 const config = Object.assign({}, baseConfig, { charsetNumber: 45, trace: false });
 console.log(config);
