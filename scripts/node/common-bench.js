@@ -24,7 +24,8 @@ let baseConfig = {
   database: 'bench',
   host: 'localhost',
   connectTimeout: 2000,
-  port: 3306
+  port: 3306,
+  rowsAsArray: true
 };
 
 if (process.env.TEST_DB_HOST) baseConfig['host'] = process.env.TEST_DB_HOST;
