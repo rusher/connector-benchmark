@@ -40,11 +40,11 @@ IF "%INSTALLATION%" == "TRUE" (
        call:InstallationNodejs
     ) ELSE IF "%LANGUAGE%" == "dotnet" (
        call:InstallationDotnet
+    ) ELSE IF "%LANGUAGE%" == "python" (
+       call:InstallationPython
     ) ELSE IF "%LANGUAGE%" == "" (
         call:Installation
     )
-
-
 
 ) else (
 
@@ -56,8 +56,12 @@ IF "%INSTALLATION%" == "TRUE" (
         call:LaunchJavaBench
     ) ELSE IF "%LANGUAGE%" == "dotnet" (
         call:LaunchDotnetBench
-    ) else IF "%LANGUAGE%" == "node" (
+    ) ELSE IF "%LANGUAGE%" == "node" (
         call:LaunchNodeBench
+    ) ELSE IF "%LANGUAGE%" == "python" (
+        call:LaunchPythonBench
+    ) ELSE IF "%LANGUAGE%" == "" (
+        call:LaunchBench
     )
 
     cd "%PROJ_PATH%"
@@ -114,12 +118,46 @@ EXIT /B 0
     CALL npm install
 EXIT /B 0
 
+:InstallationPython
+    mkdir "%PROJ_PATH%/repo"
+    cd "%PROJ_PATH%/repo"
+    IF exist mariadb-connector-python (
+        cd mariadb-connector-python
+        git pull
+    ) else (
+        git clone https://github.com/mariadb-corporation/mariadb-connector-python.git
+        cd mariadb-connector-python
+    )
+    pip install --upgrade pip
+    python -m pip install .
+    cd "%PROJ_PATH%/scripts/python"
+    pip install mysql-connector-python pyperf
+EXIT /B 0
+
+
+:InstallationBenchmark
+    mkdir "%PROJ_PATH%/repo"
+    cd "%PROJ_PATH%/repo"
+    IF exist benchmark (
+        cd benchmark
+        git pull
+    ) else (
+        git clone https://github.com/google/benchmark.git
+        cd benchmark
+    )
+    :: Make a build directory to place the build output.
+    cmake -E make_directory "build"
+    :: Generate build system files with cmake, and download any dependencies.
+    cmake -E chdir "build" cmake -DBENCHMARK_DOWNLOAD_DEPENDENCIES=on -DCMAKE_BUILD_TYPE=Release ../
+    cmake --build "build" --config Release
+EXIT /B 0
+
 :Installation
     call:InstallationJava
     call:InstallationDotnet
     call:InstallationNodejs
+    call:InstallationPython
 EXIT /B 0
-
 
 
 :LaunchJavaBench
@@ -139,6 +177,37 @@ EXIT /B 0
   CALL dotnet run --configuration Release
   copy "%PROJ_PATH%/scripts/dotnet/BenchmarkDotNet.Artifacts\results\Benchmark.MySqlClient-report-brief.json" "%PROJ_PATH%/bench_results_dotnet.json"
 EXIT /B 0
+
+:LaunchPythonBench
+    cd "%PROJ_PATH%/scripts/python"
+    IF "%TYPE%" == "mariadb" (
+        del /F /Q "%PROJ_PATH%/bench_results_python_mariadb_results.json"
+        set TEST_MODULE=mariadb
+        python bench.py -o "%PROJ_PATH%/bench_results_python_mariadb_results.json" --inherit-environ=TEST_MODULE,TEST_DB_USER,TEST_DB_HOST,TEST_DB_DATABASE,TEST_DB_PORT,TEST_DB_PASSWORD --copy-env
+    )
+    IF "%TYPE%" == "mysql" (
+        del /F /Q "%PROJ_PATH%/bench_results_python_mysql_results.json"
+        set TEST_MODULE=mysql.connector
+        python bench.py -o "%PROJ_PATH%/bench_results_python_mysql_results.json" --inherit-environ=TEST_MODULE,TEST_DB_USER,TEST_DB_HOST,TEST_DB_DATABASE,TEST_DB_PORT,TEST_DB_PASSWORD --copy-env
+    )
+    IF "%TYPE%" == "" (
+        del /F /Q "%PROJ_PATH%/bench_results_python_mariadb_results.json"
+        set TEST_MODULE=mariadb
+        python bench.py -o "%PROJ_PATH%/bench_results_python_mariadb_results.json" --inherit-environ=TEST_MODULE,TEST_DB_USER,TEST_DB_HOST,TEST_DB_DATABASE,TEST_DB_PORT,TEST_DB_PASSWORD --copy-env
+        del /F /Q "%PROJ_PATH%/bench_results_python_mysql_results.json"
+        set TEST_MODULE=mysql.connector
+        python bench.py -o "%PROJ_PATH%/bench_results_python_mysql_results.json" --inherit-environ=TEST_MODULE,TEST_DB_USER,TEST_DB_HOST,TEST_DB_DATABASE,TEST_DB_PORT,TEST_DB_PASSWORD --copy-env
+    )
+
+EXIT /B 0
+
+:LaunchBench
+    call:LaunchJavaBench
+    call:LaunchNodeBench
+    call:LaunchDotnetBench
+    call:LaunchPythonBench
+EXIT /B 0
+
 
 :: =====================================================================
 :: This function sets a variable from a cli arg with value
