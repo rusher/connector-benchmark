@@ -77,6 +77,60 @@ if(os.path.exists('./bench_results_java.json')):
         res[bench][type]['java ' + i['params']['driver']] = val
     f.close()
 
+# DOTNET results
+if(os.path.exists('./bench_results_dotnet.json')):
+    f = open('bench_results_dotnet.json', 'r')
+    data = json.load(f)['Benchmarks']
+    for i in data:
+        if (i['Statistics'] != None and "Mean" in i['Statistics']):
+            val = around(1000000000 / i['Statistics']['Mean'])
+            bench = ""
+            type = TEXT
+            driver = "community"
+            if ("MySql.Data" in i['Parameters']):
+                driver = "mysql"
+
+            if "ExecuteDo1" == i['Method']:
+                bench = DO_1
+            elif "ExecuteDo1000Param" in i['Method']:
+                bench = DO_1000
+            elif "Select1000rowsText" == i['Method']:
+                bench = SELECT_1000_ROWS
+                type = TEXT
+            elif "Select1000rowsBinary" == i['Method']:
+                bench = SELECT_1000_ROWS
+                type = BINARY_EXECUTE_ONLY
+            elif "Select100ColText" in i['Method']:
+                bench = SELECT_100
+                type = TEXT
+            elif "Select100ColBinary" in i['Method']:
+                bench = SELECT_100
+                type = BINARY_EXECUTE_ONLY
+            elif ".Insert_batch.binary" in i['Method']:
+                bench = BATCH_100
+                type = BINARY_EXECUTE_ONLY
+            elif ".Insert_batch.rewrite" in i['Method']:
+                bench = BATCH_100
+                type = REWRITE
+            elif ".Insert_batch.text" in i['Method']:
+                bench = BATCH_100
+                type = TEXT
+            elif "Select1" in i['Method']:
+                bench = SELECT_1
+            elif ".Select_100_cols.binaryNoCache" in i['Method']:
+                bench = SELECT_100
+                type = BINARY_PIPELINE
+            elif ".Select_100_cols.binaryNoPipeline" in i['Method']:
+                bench = SELECT_100
+                type = BINARY
+
+            if not bench in res:
+                res[bench] = {}
+            if not type in res[bench]:
+                res[bench][type] = {}
+
+            res[bench][type]['.net ' + driver] = val
+    f.close()
 
 def parseBenchResults(file, connType, language):
     if(os.path.exists(file)):

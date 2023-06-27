@@ -282,12 +282,11 @@ echo "TEST_USE_SSL: ${TEST_USE_SSL}"
 
 
 
-
-if [ "$INSTALLATION" == "true" ] ; then
-  case $LANGUAGE in
-    java)
-      installation_setup
+IF [$INSTALLATION] (
+  installation_setup
+  IF "$LANGUAGE"=="java" (
       installation_java
+  )
       ;;
     python)
       installation_setup
@@ -320,6 +319,7 @@ if [ "$INSTALLATION" == "true" ] ; then
       installation_nodejs
       ;;
   esac
+)
 else
 
   execute_setup

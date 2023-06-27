@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+    <LangVersion>11.0</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
+<!--     <PackageReference Include="MySqlConnector" Version="2.2.6" /> -->
+    <PackageReference Include="MySql.Data" Version="8.0.32" />
+  </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\..\repo\MySqlConnector\src\MySqlConnector\MySqlConnector.csproj"/>
+      <Using Include="MySqlConnector.Core"/>
+    </ItemGroup>
+</Project>

@@ -12,7 +12,7 @@ How to run :
 sudo ./bench.sh -i
 
 # run benchmark, results will be in bench_results_*.json files
-sudo ./bench.sh -h 10.0.54.130 -u bench -w myBenchPwd
+sudo ./bench.sh -h 10.0.54.130 -u bench -w myBenchPwd -l c
 
 # view results
 python show_results.py 
