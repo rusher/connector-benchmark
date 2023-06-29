@@ -33,8 +33,11 @@ if(os.path.exists('./bench_results_java.json')):
 
         if ".Do_1." in i['benchmark']:
             bench = DO_1
-        elif ".Do_1000_params." in i['benchmark']:
+        elif ".Do_1000_params.text" in i['benchmark']:
             bench = DO_1000
+        elif ".Do_1000_params.binary" in i['benchmark']:
+            bench = DO_1000
+            type = BINARY_EXECUTE_ONLY
         elif ".Insert_batch.binary" in i['benchmark']:
             bench = BATCH_100
             type = BINARY_EXECUTE_ONLY
@@ -94,6 +97,9 @@ if(os.path.exists('./bench_results_dotnet.json')):
                 bench = DO_1
             elif "ExecuteDo1000Param" in i['Method']:
                 bench = DO_1000
+            elif "ExecuteDo1000PrepareParam" in i['Method']:
+                bench = DO_1000
+                type = BINARY_EXECUTE_ONLY
             elif "Select1000rowsText" == i['Method']:
                 bench = SELECT_1000_ROWS
                 type = TEXT
@@ -212,6 +218,9 @@ if(os.path.exists('./bench_results_nodejs.json')):
                 bench = DO_1
             elif benchType == "do 1000 parameter":
                 bench = DO_1000
+            elif benchType == "do 1000 parameter - BINARY":
+                bench = DO_1000
+                type = BINARY_EXECUTE_ONLY
             elif benchType.startswith("100 * insert 100 characters using batch method"):
                 bench = BATCH_100
                 type = TEXT

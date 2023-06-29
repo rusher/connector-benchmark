@@ -158,6 +158,20 @@ public class MySqlClient
 	}
 
 	[Benchmark]
+	public async Task<int> ExecuteDo1000PrepareParamMySql()
+	{
+		using var cmd = Connection.CreateCommand();
+		cmd.CommandText = do1000Param;
+		cmd.Prepare();
+        for (int i = 1; i <= 1000; i++) {
+          var param = new MySql.Data.MySqlClient.MySqlParameter();
+          param.Value = i;
+          cmd.Parameters.Add(param);
+        }
+		return await cmd.ExecuteNonQueryAsync();
+	}
+
+	[Benchmark]
 	public async Task<int> ExecuteDo1000ParamMySql()
 	{
 		using var cmd = Connection.CreateCommand();
@@ -175,6 +189,18 @@ public class MySqlClient
 	{
 		using var cmd = Connection.CreateCommand();
 		cmd.CommandText = do1000Param;
+        for (int i = 1; i <= 1000; i++) {
+          cmd.Parameters.Add(new MySqlConnector.MySqlParameter() { Value = 100 });
+        }
+		return await cmd.ExecuteNonQueryAsync();
+	}
+
+	[Benchmark]
+	public async Task<int> ExecuteDo1000PrepareParamCommPrepare()
+	{
+		using var cmd = Connection.CreateCommand();
+		cmd.CommandText = do1000Param;
+		cmd.Prepare();
         for (int i = 1; i <= 1000; i++) {
           cmd.Parameters.Add(new MySqlConnector.MySqlParameter() { Value = 100 });
         }

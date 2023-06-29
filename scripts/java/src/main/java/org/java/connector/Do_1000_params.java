@@ -28,4 +28,14 @@ public class Do_1000_params extends Common {
       return st.executeUpdate();
     }
   }
+
+  @Benchmark
+  public int binary(MyState state) throws Throwable {
+    try (PreparedStatement st = state.connectionBinary.prepareStatement(sql)) {
+      for (int i = 1; i <= 1000; i++) {
+        st.setInt(i, i);
+      }
+      return st.executeUpdate();
+    }
+  }
 }
