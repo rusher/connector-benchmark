@@ -15,6 +15,11 @@ installation_java () {
   mvn -version
 }
 
+installation_rust () {
+  apt update
+  sudo apt install cargo
+}
+
 installation_c () {
   apt update
   apt install -y software-properties-common build-essential cmake libssl-dev
@@ -45,6 +50,7 @@ installation_cpp () {
     git pull
   else
     git clone https://github.com/mariadb-corporation/mariadb-connector-cpp.git
+    git checkout develop
   fi
   mkdir -p $PROJ_PATH/repo/build-cpp
   cd $PROJ_PATH/repo/build-cpp
@@ -145,6 +151,11 @@ launch_java_bench () {
   cd $PROJ_PATH/scripts/java
   mvn clean package
   java -Duser.country=US -Duser.language=en -jar target/benchmarks.jar -rf json -rff $PROJ_PATH/bench_results_java.json
+}
+
+launch_rust_bench () {
+  cd $PROJ_PATH/scripts/rust
+  cargo bench
 }
 
 launch_python_bench () {
@@ -282,11 +293,11 @@ echo "TEST_USE_SSL: ${TEST_USE_SSL}"
 
 
 
-IF [$INSTALLATION] (
+if [[ $INSTALLATION == true ]]; then
   installation_setup
-  IF "$LANGUAGE"=="java" (
+  case $LANGUAGE in
+    java)
       installation_java
-  )
       ;;
     python)
       installation_setup
@@ -308,7 +319,9 @@ IF [$INSTALLATION] (
       installation_setup
       installation_nodejs
       ;;
-
+    rust)
+      installation_rust
+      ;;
     *)
       installation_setup
       installation_c
@@ -317,11 +330,10 @@ IF [$INSTALLATION] (
       installation_benchmark
       installation_java
       installation_nodejs
+      installation_rust
       ;;
   esac
-)
 else
-
   execute_setup
 
   if [[ $LD_LIBRARY_PATH != *":/usr/local/lib"* ]]; then
@@ -343,11 +355,15 @@ else
     node)
       launch_nodejs_bench
       ;;
+    rust)
+      launch_rust_bench
+      ;;
     *)
       launch_java_bench
       launch_c_bench
       launch_cpp_bench
       launch_nodejs_bench
+      launch_rust_bench
       ;;
   esac
   cd $PROJ_PATH
