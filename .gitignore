@@ -11,3 +11,4 @@ bench_results_*
 /scripts/node/node_modules
 /scripts/node/package-lock.json
 
+/scripts/rust/target/
