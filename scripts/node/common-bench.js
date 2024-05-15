@@ -35,7 +35,7 @@ if (process.env.TEST_DB_DATABASE) baseConfig['database'] = process.env.TEST_DB_D
 if (process.env.TEST_DB_PORT) baseConfig['port'] = parseInt(process.env.TEST_DB_PORT, 10);
 if (process.env.TEST_USE_SSL && process.env.TEST_USE_SSL === 'true') baseConfig['ssl'] = { rejectUnauthorized: false };
 
-const config = Object.assign({}, baseConfig, { charsetNumber: 45, trace: false });
+const config = Object.assign({}, baseConfig, { trace: false });
 console.log(config);
 const minimumSamples = 300;
 

@@ -177,11 +177,12 @@ def parseBenchResults(file, connType, language):
                 elif "SELECT 1000 rows (int + char(32))/" in i['name']:
                     bench = SELECT_1000_ROWS
                     type = TEXT
-                elif "DO 1000 params/" in i['name']:
-                    if not (language == "c"):
-                        bench = DO_1000
-                        if (connType == "mysql"):
-                            type = BINARY
+                # elif "DO 1000 params/" in i['name']:
+                #     # if not (language == "c"):
+                #     bench = DO_1000
+                #     type = TEXT
+                #     # if (connType == "mysql"):
+                #     #     type = BINARY
                 else:
                     print("bench not recognized : " + i['name'])
 
@@ -249,6 +250,25 @@ if(os.path.exists('./bench_results_nodejs.json')):
                     res[bench][type] = {}
                 res[bench][type]['node ' + curRes['name']] = val
     f.close()
+
+
+# RUST results
+def parseRustRes(path, type, bench):
+    if(os.path.exists(f"./scripts/rust/target/criterion/{path}/base/estimates.json")):
+        f = open(f"scripts/rust/target/criterion/{path}/base/estimates.json", 'r')
+        data = json.load(f)
+        val = around(1000000000 / data['mean']['point_estimate'])
+        if not bench in res:
+            res[bench] = {}
+        if not type in res[bench]:
+            res[bench][type] = {}
+        res[bench][type]['rust sync'] = val
+        f.close()
+
+parseRustRes("do 1", TEXT, DO_1)
+parseRustRes("do 1000 param", BINARY_EXECUTE_ONLY, DO_1000)
+parseRustRes("select 1", TEXT, SELECT_1)
+parseRustRes("select 1000 rows", TEXT, SELECT_1000_ROWS)
 
 def parsePythonBenchResults(file, connType):
     if(os.path.exists(file)):

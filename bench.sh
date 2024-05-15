@@ -155,7 +155,7 @@ launch_java_bench () {
 
 launch_rust_bench () {
   cd $PROJ_PATH/scripts/rust
-  cargo bench
+  cargo bench --message-format=json
 }
 
 launch_python_bench () {

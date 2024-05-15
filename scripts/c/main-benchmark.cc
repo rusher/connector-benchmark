@@ -65,6 +65,10 @@ MYSQL* connect(std::string options) {
                   NULL,
                   NULL,
                   NULL);
+  } else {
+    my_bool zero = false;
+    mysql_optionsv(con, MYSQL_OPT_SSL_ENFORCE, &zero);
+    mysql_options(con,MYSQL_OPT_SSL_VERIFY_SERVER_CERT,&zero);
   }
 
   if (mysql_real_connect(con, DB_HOST.c_str(), DB_USER.c_str(), DB_PASSWORD.c_str(),
@@ -109,6 +113,19 @@ MYSQL* connect(std::string options) {
       mysql_close(con);
       exit(1);
   }
+
+//  int rc;
+//    rc = mysql_query(con, "show STATUS  LIKE 'Ssl_version'");
+//
+//    MYSQL_RES *result = mysql_store_result(con);
+//
+//    int val;
+//    MYSQL_ROW row;
+//    row = mysql_fetch_row(result);
+//
+//    fprintf(stderr, "----%s\n", row[1]);
+//    mysql_free_result(result);
+
   return con;
 }
 #endif
@@ -320,6 +337,7 @@ static void BM_SELECT_100_INT_COLS(benchmark::State& state) {
   mysql_close(conn);
 }
 
+
 static void BM_SELECT_100_INT_COLS_WITH_PREPARE(benchmark::State& state) {
   MYSQL *conn = connect("");
   int numOperation = 0;
@@ -356,34 +374,34 @@ BENCHMARK(BM_SELECT_100_INT_COLS_PREPARED)->Name(TYPE + " SELECT 100 int cols - 
 
 
 
-void do_1000_params(benchmark::State& state, MYSQL* conn, const char* query) {
-  int rc;
-  rc = mysql_query(conn, query);
-  check_conn_rc(rc, conn);
-
-  int id;
-  benchmark::DoNotOptimize(id = mysql_insert_id(conn));
-}
-
-static void BM_DO_1000_PARAMS(benchmark::State& state) {
-  MYSQL *conn = connect("");
-  std::string query = "DO 1";
-  for (int i = 1; i < 1000; i++) {
-    query += "," + std::to_string(i);
-  }
-  const char* queryChar = query.c_str();
-  int rc;
-
-  int numOperation = 0;
-  for (auto _ : state) {
-    do_1000_params(state, conn, queryChar);
-    numOperation++;
-  }
-  state.counters[OPERATION_PER_SECOND_LABEL] = benchmark::Counter(numOperation, benchmark::Counter::kIsRate);
-  mysql_close(conn);
-}
-
-BENCHMARK(BM_DO_1000_PARAMS)->Name(TYPE + " DO 1000 params")->Threads(MAX_THREAD)->UseRealTime();
+//void do_1000_params(benchmark::State& state, MYSQL* conn, const char* query) {
+//  int rc;
+//  rc = mysql_query(conn, query);
+//  check_conn_rc(rc, conn);
+//
+//  int id;
+//  benchmark::DoNotOptimize(id = mysql_insert_id(conn));
+//}
+//
+//static void BM_DO_1000_PARAMS(benchmark::State& state) {
+//  MYSQL *conn = connect("");
+//  std::string query = "DO 1";
+//  for (int i = 1; i < 1000; i++) {
+//    query += "," + std::to_string(i);
+//  }
+//  const char* queryChar = query.c_str();
+//  int rc;
+//
+//  int numOperation = 0;
+//  for (auto _ : state) {
+//    do_1000_params(state, conn, queryChar);
+//    numOperation++;
+//  }
+//  state.counters[OPERATION_PER_SECOND_LABEL] = benchmark::Counter(numOperation, benchmark::Counter::kIsRate);
+//  mysql_close(conn);
+//}
+//
+//BENCHMARK(BM_DO_1000_PARAMS)->Name(TYPE + " DO 1000 params")->Threads(MAX_THREAD)->UseRealTime();
 
 
 
