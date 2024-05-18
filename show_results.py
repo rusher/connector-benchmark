@@ -254,8 +254,8 @@ if(os.path.exists('./bench_results_nodejs.json')):
 
 # RUST results
 def parseRustRes(path, type, bench):
-    if(os.path.exists(f"./scripts/rust/target/criterion/{path}/base/estimates.json")):
-        f = open(f"scripts/rust/target/criterion/{path}/base/estimates.json", 'r')
+    if(os.path.exists(f"./scripts/rust/target/criterion/bench/{path}/base/estimates.json")):
+        f = open(f"scripts/rust/target/criterion/bench/{path}/base/estimates.json", 'r')
         data = json.load(f)
         val = around(1000000000 / data['mean']['point_estimate'])
         if not bench in res:
@@ -269,6 +269,7 @@ parseRustRes("do 1", TEXT, DO_1)
 parseRustRes("do 1000 param", BINARY_EXECUTE_ONLY, DO_1000)
 parseRustRes("select 1", TEXT, SELECT_1)
 parseRustRes("select 1000 rows", TEXT, SELECT_1000_ROWS)
+parseRustRes("select 1000 rows binary", BINARY_EXECUTE_ONLY, SELECT_1000_ROWS)
 
 def parsePythonBenchResults(file, connType):
     if(os.path.exists(file)):

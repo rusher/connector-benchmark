@@ -18,6 +18,7 @@ installation_java () {
 installation_rust () {
   apt update
   sudo apt install cargo
+  # curl https://sh.rustup.rs -sSf | sh
 }
 
 installation_c () {
@@ -155,7 +156,8 @@ launch_java_bench () {
 
 launch_rust_bench () {
   cd $PROJ_PATH/scripts/rust
-  cargo bench --message-format=json
+#  cargo bench -q --message-format=json
+  cargo bench -q
 }
 
 launch_python_bench () {

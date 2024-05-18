@@ -91,7 +91,7 @@ public class Common {
                 useSSL ? "REQUIRED" : "DISABLED",
                 true,
                 true,
-                other);
+                "&useBulkStmts=false" + other);
 
         connectionText =
             ((java.sql.Driver) Class.forName(className).getDeclaredConstructor().newInstance())
