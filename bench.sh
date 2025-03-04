@@ -295,7 +295,7 @@ echo "TEST_DB_PASSWORD: ${TEST_DB_PASSWORD}"
 echo "TEST_USE_SSL: ${TEST_USE_SSL}"
 
 
-
+source venv/bin/activate
 if [[ $INSTALLATION == true ]]; then
   installation_setup
   case $LANGUAGE in
