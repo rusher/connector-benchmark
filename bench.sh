@@ -194,11 +194,11 @@ launch_c_bench () {
   if [ -n "$TYPE" ] ; then
     case $TYPE in
       mariadb)
-        g++ main-benchmark.cc -std=c++11 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -I/usr/local/include/mariadb -I/usr/local/include/mariadb/mysql -L/usr/local/lib/mariadb/ -lmariadb -lbenchmark -lpthread -o main-benchmark
+        g++ main-benchmark.cc -std=c++17 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -I/usr/local/include/mariadb -I/usr/local/include/mariadb/mysql -L/usr/local/lib/mariadb/ -lmariadb -lbenchmark -lpthread -o main-benchmark
         ./main-benchmark --benchmark_repetitions=30 --benchmark_time_unit=us --benchmark_min_warmup_time=10 --benchmark_counters_tabular=true --benchmark_format=json --benchmark_out=$PROJ_PATH/bench_results_c_mariadb_results.json
         ;;
       mysql)
-        g++ main-benchmark.cc -std=c++11 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -lbenchmark -lpthread -DBENCHMARK_MYSQL -lmysqlclient -o main-benchmark
+        g++ main-benchmark.cc -std=c++17 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -lbenchmark -lpthread -DBENCHMARK_MYSQL -lmysqlclient -o main-benchmark
         ./main-benchmark --benchmark_repetitions=30 --benchmark_time_unit=us --benchmark_min_warmup_time=10 --benchmark_counters_tabular=true --benchmark_format=json --benchmark_out=$PROJ_PATH/bench_results_c_mysql.json
         ;;
       *)
@@ -207,9 +207,9 @@ launch_c_bench () {
         ;;
     esac
   else
-    g++ main-benchmark.cc -std=c++11 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -I/usr/local/include/mariadb -I/usr/local/include/mariadb/mysql -L/usr/local/lib/mariadb/ -lmariadb -lbenchmark -lpthread -o main-benchmark
+    g++ main-benchmark.cc -std=c++17 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -I/usr/local/include/mariadb -I/usr/local/include/mariadb/mysql -L/usr/local/lib/mariadb/ -lmariadb -lbenchmark -lpthread -o main-benchmark
     ./main-benchmark --benchmark_repetitions=30 --benchmark_time_unit=us --benchmark_min_warmup_time=10 --benchmark_counters_tabular=true --benchmark_format=json --benchmark_out=$PROJ_PATH/bench_results_c_mariadb.json
-    g++ main-benchmark.cc -std=c++11 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -lbenchmark -lpthread -DBENCHMARK_MYSQL -lmysqlclient -o main-benchmark
+    g++ main-benchmark.cc -std=c++17 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -lbenchmark -lpthread -DBENCHMARK_MYSQL -lmysqlclient -o main-benchmark
     ./main-benchmark --benchmark_repetitions=30 --benchmark_time_unit=us --benchmark_min_warmup_time=10 --benchmark_counters_tabular=true --benchmark_format=json --benchmark_out=$PROJ_PATH/bench_results_c_mysql.json
   fi
 
@@ -220,11 +220,11 @@ launch_cpp_bench () {
   if [ -n "$TYPE" ] ; then
     case $TYPE in
       mariadb)
-        g++ main-benchmark.cc -std=c++11 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -L/usr/local/lib/mariadb/ -lbenchmark -lpthread -lmariadbcpp -o main-benchmark
+        g++ main-benchmark.cc -std=c++17 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -L/usr/local/lib/mariadb/ -lbenchmark -lpthread -lmariadbcpp -o main-benchmark
         ./main-benchmark --benchmark_repetitions=30 --benchmark_time_unit=us --benchmark_min_warmup_time=10 --benchmark_counters_tabular=true --benchmark_format=json --benchmark_out=$PROJ_PATH/bench_results_cpp_mariadb.json
         ;;
       mysql)
-        g++ main-benchmark.cc -std=c++11 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -lbenchmark -lpthread -DMYSQL -lmysqlcppconn -o main-benchmark
+        g++ main-benchmark.cc -std=c++17 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -lbenchmark -lpthread -DMYSQL -lmysqlcppconn -o main-benchmark
         ./main-benchmark --benchmark_repetitions=30 --benchmark_time_unit=us --benchmark_min_warmup_time=10 --benchmark_counters_tabular=true --benchmark_format=json --benchmark_out=$PROJ_PATH/bench_results_cpp_mysql.json
         ;;
       *)
@@ -233,9 +233,9 @@ launch_cpp_bench () {
         ;;
     esac
   else
-    g++ main-benchmark.cc -std=c++11 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -L/usr/local/lib/mariadb/ -lbenchmark -lpthread -lmariadbcpp -o main-benchmark
+    g++ main-benchmark.cc -std=c++17 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -L/usr/local/lib/mariadb/ -lbenchmark -lpthread -lmariadbcpp -o main-benchmark
     ./main-benchmark --benchmark_repetitions=30 --benchmark_time_unit=us --benchmark_min_warmup_time=10 --benchmark_counters_tabular=true --benchmark_format=json --benchmark_out=$PROJ_PATH/bench_results_cpp_mariadb.json
-    g++ main-benchmark.cc -std=c++11 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -lbenchmark -lpthread -DMYSQL -lmysqlcppconn -o main-benchmark
+    g++ main-benchmark.cc -std=c++17 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -lbenchmark -lpthread -DMYSQL -lmysqlcppconn -o main-benchmark
     ./main-benchmark --benchmark_repetitions=30 --benchmark_time_unit=us --benchmark_min_warmup_time=10 --benchmark_counters_tabular=true --benchmark_format=json --benchmark_out=$PROJ_PATH/bench_results_cpp_mysql.json
   fi
 }
