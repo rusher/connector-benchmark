@@ -75,8 +75,8 @@ goto:eof
     choco -y install python
     python --version
     cd "%PROJ_PATH%/scripts/setup"
-    pip3 install --upgrade pip
-    pip3 install packaging
+    pip install --upgrade pip
+    pip install packaging
     pip install mysql-connector-python
 EXIT /B 0
 
@@ -128,10 +128,9 @@ EXIT /B 0
         git clone https://github.com/mariadb-corporation/mariadb-connector-python.git
         cd mariadb-connector-python
     )
-    pip install --upgrade pip
-    python -m pip install .
+    python -m pipx install .
     cd "%PROJ_PATH%/scripts/python"
-    pip install mysql-connector-python pyperf
+    pipx install mysql-connector-python pyperf
 EXIT /B 0
 
 

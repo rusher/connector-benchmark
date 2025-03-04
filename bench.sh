@@ -80,8 +80,8 @@ installation_python () {
     git clone https://github.com/mariadb-corporation/mariadb-connector-python.git
   fi
   cd $PROJ_PATH/repo/mariadb-connector-python
-  pip3 install --upgrade pip
-  pip3 install packaging
+  pip install --upgrade pip
+  pip install packaging
   python setup.py build
   python setup.py install
   cd $PROJ_PATH/scripts/python
@@ -138,8 +138,9 @@ installation_setup () {
   apt install -y software-properties-common build-essential  python-is-python3
   python --version
   cd $PROJ_PATH/scripts/setup
-  pip3 install --upgrade pip
-  pip3 install packaging
+  python -m venv venv
+  source venv/bin/activate
+  pip install packaging
   pip install mysql-connector-python
 }
 
