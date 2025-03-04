@@ -107,7 +107,7 @@ installation_benchmark () {
   # or, starting with CMake 3.13, use a simpler form:
   # cmake -DCMAKE_BUILD_TYPE=Release -S . -B "build"
   # Build the library.
-  cmake --build "build" --config Release
+  cmake --build "build" --config Release --target install
 }
 
 installation_nodejs () {
