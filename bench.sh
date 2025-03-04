@@ -51,7 +51,6 @@ installation_cpp () {
     git pull
   else
     git clone https://github.com/mariadb-corporation/mariadb-connector-cpp.git
-    git checkout develop
   fi
   mkdir -p $PROJ_PATH/repo/build-cpp
   cd $PROJ_PATH/repo/build-cpp
