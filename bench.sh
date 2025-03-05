@@ -17,7 +17,7 @@ installation_java () {
 
 installation_rust () {
   apt update
-  sudo apt install cargo
+  sudo apt install cargo rustc-1.81
   # curl https://sh.rustup.rs -sSf | sh
 }
 
