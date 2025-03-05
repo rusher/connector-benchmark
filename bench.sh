@@ -157,6 +157,8 @@ launch_java_bench () {
 launch_rust_bench () {
   cd $PROJ_PATH/scripts/rust
   cargo --version
+  export PATH="$HOME/.cargo/bin:$PATH"
+  cargo --version
 #  cargo bench -q --message-format=json
   cargo bench -q
 }
