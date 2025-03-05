@@ -65,7 +65,7 @@ public class Common {
       }
       try {
         String jdbcBase =
-            "jdbc:%s://%s:%s/%s?user=%s&password=%s&sslMode=%s&useServerPrepStmts=%s&prepStmtCacheSize=%s&serverTimezone=UTC%s";
+            "jdbc:%s://%s:%s/%s?user=%s&password=%s&sslMode=%s&useServerPrepStmts=%s&cachePrepStmts=%s&serverTimezone=UTC%s";
         String jdbcUrlText =
             String.format(
                 jdbcBase,
@@ -77,7 +77,7 @@ public class Common {
                 password,
                 useSSL ? "REQUIRED" : "DISABLED",
                 false,
-                250,
+                true,
                 other);
         String jdbcUrlBinary =
             String.format(
@@ -90,7 +90,7 @@ public class Common {
                 password,
                 useSSL ? "REQUIRED" : "DISABLED",
                 true,
-                250,
+                true,
                 "&useBulkStmts=true" + other);
 
         connectionText =
@@ -107,7 +107,7 @@ public class Common {
                 password,
                 useSSL ? "REQUIRED" : "DISABLED",
                 false,
-                250,
+                false,
                 "&rewriteBatchedStatements=true&useBulkStmts=false" + other);
         connectionTextRewrite =
             ((java.sql.Driver) Class.forName(className).getDeclaredConstructor().newInstance())
@@ -127,7 +127,7 @@ public class Common {
                 password,
                 useSSL ? "REQUIRED" : "DISABLED",
                 true,
-                0,
+                false,
                 "&prepStmtCacheSize=0" + other);
 
         connectionBinaryNoCache =
@@ -145,7 +145,7 @@ public class Common {
                 password,
                 useSSL ? "REQUIRED" : "DISABLED",
                 true,
-                    250,
+                true,
                 "&prepStmtCacheSize=0&cachePrepStmts=false&disablePipeline=true" + other);
         connectionBinaryNoPipeline =
             ((java.sql.Driver) Class.forName(className).getDeclaredConstructor().newInstance())
