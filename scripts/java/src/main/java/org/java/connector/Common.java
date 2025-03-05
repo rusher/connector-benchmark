@@ -11,8 +11,8 @@ import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.*;
 
 @State(Scope.Benchmark)
-@Warmup(iterations = 10, timeUnit = TimeUnit.SECONDS, time = 1)
-@Measurement(iterations = 10, timeUnit = TimeUnit.SECONDS, time = 1)
+@Warmup(iterations = 7, timeUnit = TimeUnit.SECONDS, time = 1)
+@Measurement(iterations = 7, timeUnit = TimeUnit.SECONDS, time = 1)
 @Fork(value = 5)
 @Threads(value = 1)
 @BenchmarkMode(Mode.Throughput)
