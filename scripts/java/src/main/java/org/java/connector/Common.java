@@ -65,7 +65,7 @@ public class Common {
       }
       try {
         String jdbcBase =
-            "jdbc:%s://%s:%s/%s?user=%s&password=%s&sslMode=%s&useServerPrepStmts=%s&cachePrepStmts=%s&serverTimezone=UTC%s";
+            "jdbc:%s://%s:%s/%s?user=%s&password=%s&sslMode=%s&useServerPrepStmts=%s&prepStmtCacheSize=%s&serverTimezone=UTC%s";
         String jdbcUrlText =
             String.format(
                 jdbcBase,
@@ -77,7 +77,7 @@ public class Common {
                 password,
                 useSSL ? "REQUIRED" : "DISABLED",
                 false,
-                false,
+                250,
                 other);
         String jdbcUrlBinary =
             String.format(
@@ -90,8 +90,8 @@ public class Common {
                 password,
                 useSSL ? "REQUIRED" : "DISABLED",
                 true,
-                true,
-                "&useBulkStmts=false" + other);
+                250,
+                "&useBulkStmts=true" + other);
 
         connectionText =
             ((java.sql.Driver) Class.forName(className).getDeclaredConstructor().newInstance())
@@ -107,7 +107,7 @@ public class Common {
                 password,
                 useSSL ? "REQUIRED" : "DISABLED",
                 false,
-                false,
+                250,
                 "&rewriteBatchedStatements=true&useBulkStmts=false" + other);
         connectionTextRewrite =
             ((java.sql.Driver) Class.forName(className).getDeclaredConstructor().newInstance())
@@ -127,7 +127,7 @@ public class Common {
                 password,
                 useSSL ? "REQUIRED" : "DISABLED",
                 true,
-                false,
+                0,
                 "&prepStmtCacheSize=0" + other);
 
         connectionBinaryNoCache =
@@ -145,7 +145,7 @@ public class Common {
                 password,
                 useSSL ? "REQUIRED" : "DISABLED",
                 true,
-                true,
+                    250,
                 "&prepStmtCacheSize=0&cachePrepStmts=false&disablePipeline=true" + other);
         connectionBinaryNoPipeline =
             ((java.sql.Driver) Class.forName(className).getDeclaredConstructor().newInstance())
