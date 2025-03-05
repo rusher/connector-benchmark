@@ -78,7 +78,7 @@ public class Common {
                 useSSL ? "REQUIRED" : "DISABLED",
                 false,
                 true,
-                other);
+                "&useBulkStmts=false" + other);
         String jdbcUrlBinary =
             String.format(
                 jdbcBase,
