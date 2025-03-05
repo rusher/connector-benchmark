@@ -250,6 +250,7 @@ launch_nodejs_bench () {
 }
 
 execute_setup () {
+  source venv/bin/activate
   cd $PROJ_PATH/scripts/setup
   python ./setup.py
 }
