@@ -64,7 +64,7 @@ sql::Connection* connect(std::string options) {
         // Configure Connection
 
          // Establish Connection
-         con = driver->connect("tcp://" + DB_HOST + ":" + DB_PORT + "/" + DB_DATABASE  + (DB_SSL ? "?useTls=true" : "?") + options, DB_USER, DB_PASSWORD);
+         con = driver->connect("tcp://" + DB_HOST + ":" + DB_PORT + "/" + DB_DATABASE  + (DB_SSL ? "?useTls=true" + options: (options == "") ? "" : "?"), DB_USER, DB_PASSWORD);
          return con;
 
      } catch(sql::SQLException& e){
