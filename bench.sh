@@ -136,8 +136,8 @@ installation_setup () {
   apt update
   apt install -y software-properties-common build-essential  python-is-python3
   python --version
-  cd $PROJ_PATH/scripts/setup
   python -m venv venv
+  cd $PROJ_PATH/scripts/setup
   source venv/bin/activate
   pip install packaging
   pip install mysql-connector-python
