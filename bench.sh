@@ -134,7 +134,7 @@ installation_nodejs () {
 
 installation_setup () {
   apt update
-  apt install -y software-properties-common build-essential  python-is-python3
+  apt install -y software-properties-common build-essential  python-is-python3  python3-venv
   python --version
   python -m venv venv
   cd $PROJ_PATH/scripts/setup
