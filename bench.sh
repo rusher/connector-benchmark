@@ -298,9 +298,9 @@ echo "TEST_DB_PASSWORD: ${TEST_DB_PASSWORD}"
 echo "TEST_USE_SSL: ${TEST_USE_SSL}"
 
 
-source venv/bin/activate
 if [[ $INSTALLATION == true ]]; then
   installation_setup
+  source venv/bin/activate
   case $LANGUAGE in
     java)
       installation_java
@@ -340,6 +340,7 @@ if [[ $INSTALLATION == true ]]; then
       ;;
   esac
 else
+  source venv/bin/activate
   execute_setup
 
   if [[ $LD_LIBRARY_PATH != *":/usr/local/lib"* ]]; then
