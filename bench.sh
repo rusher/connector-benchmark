@@ -300,6 +300,7 @@ echo "TEST_USE_SSL: ${TEST_USE_SSL}"
 
 if [[ $INSTALLATION == true ]]; then
   installation_setup
+  cd $PROJ_PATH
   source venv/bin/activate
   case $LANGUAGE in
     java)
@@ -340,6 +341,7 @@ if [[ $INSTALLATION == true ]]; then
       ;;
   esac
 else
+  cd $PROJ_PATH
   source venv/bin/activate
   execute_setup
 
