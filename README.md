@@ -4,6 +4,8 @@ available languages :
 * c
 * c++
 * java
+* rust
+* go
 
 
 How to run : 
@@ -32,7 +34,7 @@ python show_results.py
 
 
 possible options :
-* l: language. java, c, c++. nothing means all.
+* l: language. java, c, c++, go. nothing means all.
 * t: type mariadb/mysql. nothing means all.
 * i: installation (no parameters). It will build/install requirement for designated language(s)
 * p: server port. default 3306 if not set

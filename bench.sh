@@ -87,6 +87,29 @@ installation_python () {
   pip install mysql-connector-python pyperf
 }
 
+installation_go () {
+  apt update
+  apt install -y wget gcc
+  
+  # Install Go if not already installed
+  if ! command -v go &> /dev/null; then
+    wget https://go.dev/dl/go1.22.1.linux-amd64.tar.gz
+    tar -C /usr/local -xzf go1.22.1.linux-amd64.tar.gz
+    rm go1.22.1.linux-amd64.tar.gz
+    
+    # Add Go to PATH
+    export PATH=$PATH:/usr/local/go/bin
+    echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile
+  fi
+  
+  # Verify Go installation
+  go version
+  
+  # Install dependencies for Go benchmark
+  cd $PROJ_PATH/scripts/go
+  go mod download
+}
+
 installation_benchmark () {
   mkdir -p $PROJ_PATH/repo
   cd $PROJ_PATH/repo
@@ -243,6 +266,12 @@ launch_cpp_bench () {
   fi
 }
 
+launch_go_bench () {
+  cd $PROJ_PATH/scripts/go
+  
+  # Build and run the benchmark
+  go test -bench=. -benchtime=10s -cpu=1 -count=1 > $PROJ_PATH/bench_results_go.txt
+}
 
 launch_nodejs_bench () {
   cd $PROJ_PATH/scripts/node
@@ -326,6 +355,10 @@ if [[ $INSTALLATION == true ]]; then
       installation_setup
       installation_nodejs
       ;;
+    go)
+      installation_setup
+      installation_go
+      ;;
     rust)
       installation_rust
       ;;
@@ -337,6 +370,7 @@ if [[ $INSTALLATION == true ]]; then
       installation_benchmark
       installation_java
       installation_nodejs
+      installation_go
       installation_rust
       ;;
   esac
@@ -364,6 +398,9 @@ else
     node)
       launch_nodejs_bench
       ;;
+    go)
+      launch_go_bench
+      ;;
     rust)
       launch_rust_bench
       ;;
@@ -372,6 +409,7 @@ else
       launch_c_bench
       launch_cpp_bench
       launch_nodejs_bench
+      launch_go_bench
       launch_rust_bench
       ;;
   esac

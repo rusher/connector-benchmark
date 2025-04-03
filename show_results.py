@@ -80,6 +80,49 @@ if(os.path.exists('./bench_results_java.json')):
         res[bench][type]['java ' + i['params']['driver']] = val
     f.close()
 
+
+# GO results
+if(os.path.exists('./bench_results_go.txt')):
+    f = open('bench_results_go.txt', 'r')
+    lines = f.readlines()
+    for line in lines:
+        print(line)
+        if line.startswith('Benchmark'):
+            parts = line.split()
+            print(parts)
+            val = 0
+            bench = ""
+            type = TEXT
+            
+            # Convert ns/op to operations per second (1 second = 1,000,000,000 ns)
+            if len(parts) >= 4 and "ns/op" == parts[3]:
+                print(parts[2])
+                ns_per_op = float(parts[2])
+                val = around(1000000000 / ns_per_op)
+            
+            if "BenchmarkSelect1" == parts[0]:
+                bench = SELECT_1
+            elif "BenchmarkDo1" == parts[0]:
+                bench = DO_1
+            elif "BenchmarkSelect1000Rows" == parts[0]:
+                bench = SELECT_1000_ROWS
+            elif "BenchmarkSelect100Int" == parts[0]:
+                bench = SELECT_100
+            elif "BenchmarkDo1000Params" == parts[0]:
+                bench = DO_1000
+            elif "BenchmarkDo1000ParamsBinary" == parts[0]:
+                bench = DO_1000
+                type = BINARY_EXECUTE_ONLY
+
+            if bench != "":
+                if not bench in res:
+                    res[bench] = {}
+                if not type in res[bench]:
+                    res[bench][type] = {}
+                
+                res[bench][type]['go'] = val
+    f.close()
+
 # DOTNET results
 if(os.path.exists('./bench_results_dotnet.json')):
     f = open('bench_results_dotnet.json', 'r')

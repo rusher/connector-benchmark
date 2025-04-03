@@ -10,5 +10,6 @@ bench_results_*
 /scripts/cpp/main-benchmark
 /scripts/node/node_modules
 /scripts/node/package-lock.json
+/scripts/go/go
 
 /scripts/rust/target/
