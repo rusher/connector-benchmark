@@ -11,6 +11,7 @@ proc-macro = true
 
 [dev-dependencies]
 criterion = { version = "0.5.1"}
+tokio = { version = "1.36", features = ["full"] }
 
 [[bench]]
 name = "my_benchmark"
@@ -21,3 +22,5 @@ quote = "1.0.39"
 proc-macro2 = "1.0.94"
 syn = "1.0.109"
 mysql = "26.0.0"
+sqlx = { version = "0.8", features = [ "runtime-tokio", "tls-native-tls", "mysql" ] }
+mysql_async = "0.35.1"

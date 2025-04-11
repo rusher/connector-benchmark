@@ -296,7 +296,7 @@ if(os.path.exists('./bench_results_nodejs.json')):
 
 
 # RUST results
-def parseRustRes(path, type, bench):
+def parseRustRes(path, type, bench, name):
     if(os.path.exists(f"./scripts/rust/target/criterion/bench/{path}/base/estimates.json")):
         f = open(f"scripts/rust/target/criterion/bench/{path}/base/estimates.json", 'r')
         data = json.load(f)
@@ -305,14 +305,30 @@ def parseRustRes(path, type, bench):
             res[bench] = {}
         if not type in res[bench]:
             res[bench][type] = {}
-        res[bench][type]['rust sync'] = val
+        res[bench][type][name] = val
         f.close()
 
-parseRustRes("do 1", TEXT, DO_1)
-parseRustRes("do 1000 param", BINARY_EXECUTE_ONLY, DO_1000)
-parseRustRes("select 1", TEXT, SELECT_1)
-parseRustRes("select 1000 rows", TEXT, SELECT_1000_ROWS)
-parseRustRes("select 1000 rows binary", BINARY_EXECUTE_ONLY, SELECT_1000_ROWS)
+parseRustRes("do 1", TEXT, DO_1, 'rust mysql')
+parseRustRes("do 1000 param", BINARY_EXECUTE_ONLY, DO_1000, 'rust mysql')
+parseRustRes("select 1", TEXT, SELECT_1, 'rust mysql')
+parseRustRes("select 1000 rows", TEXT, SELECT_1000_ROWS, 'rust mysql')
+parseRustRes("select 1000 rows binary", BINARY_EXECUTE_ONLY, SELECT_1000_ROWS, 'rust mysql')
+parseRustRes("select 100 int columns", TEXT, SELECT_100, 'rust mysql')
+
+parseRustRes("sqlx do 1", TEXT, DO_1, 'rust sqlx')
+parseRustRes("sqlx do 1000 param", BINARY_EXECUTE_ONLY, DO_1000, 'rust sqlx')
+parseRustRes("sqlx select 1", TEXT, SELECT_1, 'rust sqlx')
+parseRustRes("sqlx select 1000 rows", TEXT, SELECT_1000_ROWS, 'rust sqlx')
+parseRustRes("sqlx select 1000 rows binary", BINARY_EXECUTE_ONLY, SELECT_1000_ROWS, 'rust sqlx')
+parseRustRes("sqlx select 100 int columns", TEXT, SELECT_100, 'rust sqlx')
+
+parseRustRes("mysql_async do 1", TEXT, DO_1, 'rust mysql_async')
+parseRustRes("mysql_async do 1000 param", BINARY_EXECUTE_ONLY, DO_1000, 'rust mysql_async')
+parseRustRes("mysql_async select 1", TEXT, SELECT_1, 'rust mysql_async')
+parseRustRes("mysql_async select 1000 rows", TEXT, SELECT_1000_ROWS, 'rust mysql_async')
+parseRustRes("mysql_async select 1000 rows binary", BINARY_EXECUTE_ONLY, SELECT_1000_ROWS, 'rust mysql_async')
+parseRustRes("mysql_async select 100 int columns", TEXT, SELECT_100, 'rust mysql_async')
+
 
 def parsePythonBenchResults(file, connType):
     if(os.path.exists(file)):

@@ -351,7 +351,7 @@ if [[ $INSTALLATION == true ]]; then
       installation_cpp
       installation_benchmark
       ;;
-    node)
+    nodejs)
       installation_setup
       installation_nodejs
       ;;
@@ -395,7 +395,7 @@ else
     cpp)
       launch_cpp_bench
       ;;
-    node)
+    nodejs)
       launch_nodejs_bench
       ;;
     go)

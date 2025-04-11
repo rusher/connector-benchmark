@@ -177,6 +177,7 @@ func BenchmarkDo1000ParamsBinary(b *testing.B) {
 		args[i] = i + 1
 	}
 
+	b.StartTimer()
 	// Prepare the statement once before the benchmark loop
 	stmt, err := db.Prepare(sql)
 	if err != nil {
@@ -184,7 +185,6 @@ func BenchmarkDo1000ParamsBinary(b *testing.B) {
 	}
 	defer stmt.Close()
 
-	b.StartTimer()
 	for n := 0; n < b.N; n++ {
 		_, err := stmt.Exec(args...)
 		if err != nil {

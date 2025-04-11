@@ -6,6 +6,7 @@ available languages :
 * java
 * rust
 * go
+* nodejs
 
 
 How to run : 
@@ -26,7 +27,7 @@ or for a specific language
 sudo ./bench.sh -i -l c
 
 # run benchmark
-sudo ./bench.sh -l c
+./bench.sh -l c
 
 # view results
 python show_results.py 
