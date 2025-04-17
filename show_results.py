@@ -106,8 +106,14 @@ if(os.path.exists('./bench_results_go.txt')):
                 bench = DO_1
             elif "BenchmarkSelect1000Rows" == parts[0]:
                 bench = SELECT_1000_ROWS
+            elif "BenchmarkSelect1000RowsBinary" == parts[0]:
+                bench = SELECT_1000_ROWS
+                type = BINARY_EXECUTE_ONLY
             elif "BenchmarkSelect100Int" == parts[0]:
                 bench = SELECT_100
+            elif "BenchmarkSelect100IntBinary" == parts[0]:
+                bench = SELECT_100
+                type = BINARY_EXECUTE_ONLY
             elif "BenchmarkDo1000Params" == parts[0]:
                 bench = DO_1000
             elif "BenchmarkDo1000ParamsBinary" == parts[0]:

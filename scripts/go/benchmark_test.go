@@ -22,16 +22,19 @@ func getEnv(key, defaultValue string) string {
 	return value
 }
 
-func initDB() *sql.DB {
+func initDB(interpolateParams bool) *sql.DB {
 	// Get database connection parameters from environment variables
 	host := getEnv("TEST_DB_HOST", "localhost")
 	port := getEnv("TEST_DB_PORT", "3306")
 	user := getEnv("TEST_DB_USER", "root")
 	password := getEnv("TEST_DB_PASSWORD", "")
 	database := getEnv("TEST_DB_DATABASE", "bench")
-
+	interpolateParamsStr := "0"
+	if interpolateParams {
+	    interpolateParamsStr = "1"
+	}
 	// Create DSN
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host, port, database)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?interpolateParams=%s", user, password, host, port, database, interpolateParamsStr)
 
 	// Connect to database
 	db, err := sql.Open("mysql", dsn)
@@ -47,7 +50,7 @@ func initDB() *sql.DB {
 
 // benchmarkSelect1 benchmarks a simple "SELECT 1" query
 func BenchmarkSelect1(b *testing.B) {
-	db := initDB()
+	db := initDB(false)
 	b.StartTimer()
 
 	var result int
@@ -62,7 +65,7 @@ func BenchmarkSelect1(b *testing.B) {
 }
 
 func BenchmarkDo1(b *testing.B) {
-	db := initDB()
+	db := initDB(false)
 	b.StartTimer()
 
 	for n := 0; n < b.N; n++ {
@@ -77,7 +80,7 @@ func BenchmarkDo1(b *testing.B) {
 }
 
 func BenchmarkSelect1000Rows(b *testing.B) {
-	db := initDB()
+	db := initDB(false)
 	b.StartTimer()
 
 	for n := 0; n < b.N; n++ {
@@ -86,7 +89,38 @@ func BenchmarkSelect1000Rows(b *testing.B) {
 			b.Fatalf("Failed to query 1000rows: %v", err)
 		}
 
-		var id int
+		var id int64
+		var val string
+
+		for rows.Next() {
+			err = rows.Scan(&id, &val)
+			if err != nil {
+				rows.Close()
+				b.Fatalf("Failed to scan row: %v", err)
+			}
+		}
+		rows.Close()
+	}
+	b.StopTimer()
+	db.Close()
+}
+
+func BenchmarkSelect1000RowsBinary(b *testing.B) {
+	db := initDB(false)
+	b.StartTimer()
+
+	stmt, err := db.Prepare("SELECT * FROM 1000rows")
+	if err != nil {
+		b.Fatalf("Failed to prepare statement: %v", err)
+	}
+	defer stmt.Close()
+	for n := 0; n < b.N; n++ {
+		rows, err := stmt.Query()
+		if err != nil {
+			b.Fatalf("Failed to query 1000rows: %v", err)
+		}
+
+		var id int64
 		var val string
 
 		for rows.Next() {
@@ -103,7 +137,7 @@ func BenchmarkSelect1000Rows(b *testing.B) {
 }
 
 func BenchmarkSelect100Int(b *testing.B) {
-	db := initDB()
+	db := initDB(false)
 	b.StartTimer()
 
 	for n := 0; n < b.N; n++ {
@@ -114,7 +148,7 @@ func BenchmarkSelect100Int(b *testing.B) {
 
 		if rows.Next() {
 			// Create a slice of pointers to int values
-			var values [100]int
+			var values [100]int64
 			// Create scan destinations
 			scanArgs := make([]interface{}, 100)
 			for i := range values {
@@ -135,20 +169,58 @@ func BenchmarkSelect100Int(b *testing.B) {
 	db.Close()
 }
 
+func BenchmarkSelect100IntBinary(b *testing.B) {
+	db := initDB(false)
+	b.StartTimer()
+	stmt, err := db.Prepare("SELECT * FROM test100")
+	if err != nil {
+		b.Fatalf("Failed to prepare statement: %v", err)
+	}
+	defer stmt.Close()
+
+	for n := 0; n < b.N; n++ {
+		rows, err := stmt.Query()
+		if err != nil {
+			b.Fatalf("Failed to query test100: %v", err)
+		}
+
+		if rows.Next() {
+			// Create a slice of pointers to int values
+			var values [100]int64
+			// Create scan destinations
+			scanArgs := make([]interface{}, 100)
+			for i := range values {
+				scanArgs[i] = &values[i]
+			}
+
+			// Scan the row into our values
+			err = rows.Scan(scanArgs...)
+			if err != nil {
+				rows.Close()
+				b.Fatalf("Failed to scan row: %v", err)
+			}
+		}
+		rows.Close()
+	}
+
+	b.StopTimer()
+	db.Close()
+}
 func BenchmarkDo1000Params(b *testing.B) {
-	db := initDB()
+	db := initDB(true)
 
 	// Build the SQL string with 1000 parameters
 	sql := "DO ?"
-	for i := 1; i < 1000; i++ {
-		sql += ",?"
-	}
+	var i int64
+    for i = 1; i < 1000; i++ {
+        sql += ",?"
+    }
 
-	// Prepare args slice with 1000 integers
-	args := make([]interface{}, 1000)
-	for i := 0; i < 1000; i++ {
-		args[i] = i + 1
-	}
+    // Prepare args slice with 1000 integers
+    args := make([]interface{}, 1000)
+    for i = 0; i < 1000; i++ {
+        args[i] = i + 1
+    }
 
 	b.StartTimer()
 	for n := 0; n < b.N; n++ {
@@ -163,19 +235,20 @@ func BenchmarkDo1000Params(b *testing.B) {
 }
 
 func BenchmarkDo1000ParamsBinary(b *testing.B) {
-	db := initDB()
+	db := initDB(false)
 
 	// Build the SQL string with 1000 parameters
 	sql := "DO ?"
-	for i := 1; i < 1000; i++ {
-		sql += ",?"
-	}
+    var i int64
+    for i = 1; i < 1000; i++ {
+        sql += ",?"
+    }
 
-	// Prepare args slice with 1000 integers
-	args := make([]interface{}, 1000)
-	for i := 0; i < 1000; i++ {
-		args[i] = i + 1
-	}
+    // Prepare args slice with 1000 integers
+    args := make([]interface{}, 1000)
+    for i = 0; i < 1000; i++ {
+        args[i] = i + 1
+    }
 
 	b.StartTimer()
 	// Prepare the statement once before the benchmark loop
