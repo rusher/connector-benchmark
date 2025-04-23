@@ -89,7 +89,7 @@ installation_python () {
 
 installation_go () {
   apt update
-  apt install -y wget gcc
+  apt install -y wget gcc git
   
   # Install Go if not already installed
   if ! command -v go &> /dev/null; then
@@ -105,9 +105,23 @@ installation_go () {
   # Verify Go installation
   go version
   
-  # Install dependencies for Go benchmark
+  # Clone and build mysql driver from source
+  mkdir -p $PROJ_PATH/repo
+  cd $PROJ_PATH/repo
+  if [[ -e "${PROJ_PATH}/repo/mysql/" ]]
+  then
+    cd mysql
+    git pull
+  else
+    git clone https://github.com/go-sql-driver/mysql.git mysql
+    cd mysql
+  fi
+  
+  # Setup Go module and vendor directory
   cd $PROJ_PATH/scripts/go
-  go mod download
+  rm -rf vendor  # Clean up any existing vendor directory
+  go mod tidy    # Ensure go.mod is clean
+  go mod vendor  # Create vendor directory with all dependencies
 }
 
 installation_benchmark () {
