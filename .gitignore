@@ -13,3 +13,7 @@ bench_results_*
 /scripts/go/go
 /scripts/go/vendor
 /scripts/rust/target/
+/scripts/dotnet/obj
+/scripts/dotnet/bin
+/scripts/dotnet/BenchmarkDotNet.Artifacts
+

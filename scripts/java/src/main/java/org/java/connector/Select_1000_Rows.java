@@ -10,7 +10,7 @@ import java.sql.ResultSet;
 import org.openjdk.jmh.annotations.Benchmark;
 
 public class Select_1000_Rows extends Common {
-  private static final String sql = "select * from 1000rows";
+  private static final String sql = "select * from 1000rows where 1 = ?";
 
   @Benchmark
   public int text(MyState state) throws Throwable {
@@ -24,6 +24,7 @@ public class Select_1000_Rows extends Common {
 
   private int run(Connection con) throws Throwable {
     try (PreparedStatement st = con.prepareStatement(sql)) {
+      st.setInt(1, 1);
       ResultSet rs = st.executeQuery();
       int i = 0;
       while (rs.next()) {

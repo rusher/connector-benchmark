@@ -84,7 +84,7 @@ func BenchmarkSelect1000Rows(b *testing.B) {
 	b.StartTimer()
 
 	for n := 0; n < b.N; n++ {
-		rows, err := db.Query("SELECT * FROM 1000rows")
+		rows, err := db.Query("SELECT * FROM 1000rows WHERE 1 = ?", 1)
 		if err != nil {
 			b.Fatalf("Failed to query 1000rows: %v", err)
 		}
@@ -109,13 +109,13 @@ func BenchmarkSelect1000RowsBinary(b *testing.B) {
 	db := initDB(false)
 	b.StartTimer()
 
-	stmt, err := db.Prepare("SELECT * FROM 1000rows")
+	stmt, err := db.Prepare("SELECT * FROM 1000rows WHERE 1 = ?")
 	if err != nil {
 		b.Fatalf("Failed to prepare statement: %v", err)
 	}
 	defer stmt.Close()
 	for n := 0; n < b.N; n++ {
-		rows, err := stmt.Query()
+		rows, err := stmt.Query(1)
 		if err != nil {
 			b.Fatalf("Failed to query 1000rows: %v", err)
 		}
@@ -267,4 +267,51 @@ func BenchmarkDo1000ParamsBinary(b *testing.B) {
 
 	b.StopTimer()
 	db.Close()
+}
+
+// BenchmarkSelect1Pool benchmarks SELECT 1 with a connection pool
+// Uses 16 connections and 100 concurrent goroutines
+func BenchmarkSelect1Pool(b *testing.B) {
+	host := getEnv("TEST_DB_HOST", "localhost")
+	port := getEnv("TEST_DB_PORT", "3306")
+	user := getEnv("TEST_DB_USER", "root")
+	password := getEnv("TEST_DB_PASSWORD", "")
+	database := getEnv("TEST_DB_DATABASE", "bench")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host, port, database)
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		b.Fatalf("Error connecting to database: %v", err)
+	}
+	defer db.Close()
+
+	// Configure connection pool
+	db.SetMaxOpenConns(16)
+	db.SetMaxIdleConns(16)
+
+	const numTasks = 100
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		// Create a channel to synchronize goroutines
+		done := make(chan bool, numTasks)
+
+		// Launch 100 concurrent queries
+		for i := 0; i < numTasks; i++ {
+			go func() {
+				var result int
+				err := db.QueryRow("SELECT 1").Scan(&result)
+				if err != nil {
+					b.Errorf("Failed to query select 1: %v", err)
+				}
+				done <- true
+			}()
+		}
+
+		// Wait for all goroutines to complete
+		for i := 0; i < numTasks; i++ {
+			<-done
+		}
+	}
 }

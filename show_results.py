@@ -1,5 +1,7 @@
 import json
 import os.path
+import sys
+import argparse
 
 TEXT="TEXT"
 BINARY="BINARY"
@@ -12,6 +14,7 @@ DO_1 = "do 1"
 DO_1000 = "do 1000 parameters"
 BATCH_100 = "batch 100 insert of 100 chars"
 SELECT_1 = "select 1"
+SELECT_1_POOL = "select 1 pool"
 SELECT_100 = "Select 100 int cols"
 SELECT_1000_ROWS = "select 1000 rows"
 
@@ -20,10 +23,19 @@ def around(x):
         return int(x)
     return round(x, 1)
 
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Show benchmark results')
+parser.add_argument('-l', '--language', type=str, help='Filter by language (java, c, cpp, python, go, rust, nodejs, dotnet)')
+parser.add_argument('--mode', type=str, choices=['sync', 'async', 'all'], default='all', help='Show sync, async, or all drivers (default: all)')
+args = parser.parse_args()
+
+filter_language = args.language.lower() if args.language else None
+filter_mode = args.mode
+
 res = { }
 
 # JAVA results
-if(os.path.exists('./bench_results_java.json')):
+if(os.path.exists('./bench_results_java.json') and (filter_language is None or filter_language == 'java')):
     f = open('bench_results_java.json', 'r')
     data = json.load(f)
     for i in data:
@@ -53,6 +65,8 @@ if(os.path.exists('./bench_results_java.json')):
             type = TEXT
         elif ".Select_1." in i['benchmark']:
             bench = SELECT_1
+        elif ".Select_1_pool." in i['benchmark']:
+            bench = SELECT_1_POOL
         elif ".Select_100_cols.text" in i['benchmark']:
             bench = SELECT_100
             type = TEXT
@@ -82,14 +96,12 @@ if(os.path.exists('./bench_results_java.json')):
 
 
 # GO results
-if(os.path.exists('./bench_results_go.txt')):
+if(os.path.exists('./bench_results_go.txt') and (filter_language is None or filter_language == 'go')):
     f = open('bench_results_go.txt', 'r')
     lines = f.readlines()
     for line in lines:
-        print(line)
         if line.startswith('Benchmark'):
             parts = line.split()
-            print(parts)
             val = 0
             bench = ""
             type = TEXT
@@ -100,7 +112,9 @@ if(os.path.exists('./bench_results_go.txt')):
                 ns_per_op = float(parts[2])
                 val = around(1000000000 / ns_per_op)
             
-            if "BenchmarkSelect1" == parts[0]:
+            if "BenchmarkSelect1Pool" == parts[0]:
+                bench = SELECT_1_POOL
+            elif "BenchmarkSelect1" == parts[0]:
                 bench = SELECT_1
             elif "BenchmarkDo1" == parts[0]:
                 bench = DO_1
@@ -130,7 +144,7 @@ if(os.path.exists('./bench_results_go.txt')):
     f.close()
 
 # DOTNET results
-if(os.path.exists('./bench_results_dotnet.json')):
+if(os.path.exists('./bench_results_dotnet.json') and (filter_language is None or filter_language == 'dotnet')):
     f = open('bench_results_dotnet.json', 'r')
     data = json.load(f)['Benchmarks']
     for i in data:
@@ -223,6 +237,9 @@ def parseBenchResults(file, connType, language):
                 elif "SELECT 100 int cols - BINARY prepare+execute+close/" in i['name']:
                     bench = SELECT_100
                     type = BINARY
+                elif "SELECT 1000 rows (int + char(32)) - BINARY/" in i['name']:
+                    bench = SELECT_1000_ROWS
+                    type = BINARY_EXECUTE_ONLY
                 elif "SELECT 1000 rows (int + char(32))/" in i['name']:
                     bench = SELECT_1000_ROWS
                     type = TEXT
@@ -245,16 +262,18 @@ def parseBenchResults(file, connType, language):
         f.close()
 
 # C mariadb results
-parseBenchResults("./bench_results_c_mysql.json", "mysql", "c")
-parseBenchResults("./bench_results_c_mariadb.json", "mariadb", "c")
+if filter_language is None or filter_language == 'c':
+    parseBenchResults("./bench_results_c_mysql.json", "mysql", "c")
+    parseBenchResults("./bench_results_c_mariadb.json", "mariadb", "c")
 
 # C++ mariadb results
-parseBenchResults("./bench_results_cpp_mysql.json", "mysql", "c++")
-parseBenchResults("./bench_results_cpp_mariadb.json", "mariadb", "c++")
+if filter_language is None or filter_language in ['c++', 'cpp']:
+    parseBenchResults("./bench_results_cpp_mysql.json", "mysql", "c++")
+    parseBenchResults("./bench_results_cpp_mariadb.json", "mariadb", "c++")
 
 
 
-if(os.path.exists('./bench_results_nodejs.json')):
+if(os.path.exists('./bench_results_nodejs.json') and (filter_language is None or filter_language in ['nodejs', 'node'])):
     f = open('bench_results_nodejs.json', 'r')
     data = json.load(f)
 
@@ -278,6 +297,8 @@ if(os.path.exists('./bench_results_nodejs.json')):
                     type = BULK
             elif benchType == 'select 1':
                 bench = SELECT_1
+            elif benchType == 'SELECT 1 - pool (16 connections, 100 concurrent)':
+                bench = SELECT_1_POOL
             elif benchType == 'select 100 int/varchar(32)':
                 bench = SELECT_100
                 type = TEXT
@@ -314,67 +335,115 @@ def parseRustRes(path, type, bench, name):
         res[bench][type][name] = val
         f.close()
 
-parseRustRes("do 1", TEXT, DO_1, 'rust mysql')
-parseRustRes("do 1000 param", BINARY_EXECUTE_ONLY, DO_1000, 'rust mysql')
-parseRustRes("select 1", TEXT, SELECT_1, 'rust mysql')
-parseRustRes("select 1000 rows", TEXT, SELECT_1000_ROWS, 'rust mysql')
-parseRustRes("select 1000 rows binary", BINARY_EXECUTE_ONLY, SELECT_1000_ROWS, 'rust mysql')
-parseRustRes("select 100 int columns", TEXT, SELECT_100, 'rust mysql')
+if filter_language is None or filter_language == 'rust':
+    parseRustRes("do 1", TEXT, DO_1, 'rust mysql')
+    parseRustRes("do 1000 param", BINARY_EXECUTE_ONLY, DO_1000, 'rust mysql')
+    parseRustRes("select 1", TEXT, SELECT_1, 'rust mysql')
+    parseRustRes("select 1000 rows", TEXT, SELECT_1000_ROWS, 'rust mysql')
+    parseRustRes("select 1000 rows binary", BINARY_EXECUTE_ONLY, SELECT_1000_ROWS, 'rust mysql')
+    parseRustRes("select 100 int columns", TEXT, SELECT_100, 'rust mysql')
 
-parseRustRes("sqlx do 1", TEXT, DO_1, 'rust sqlx')
-parseRustRes("sqlx do 1000 param", BINARY_EXECUTE_ONLY, DO_1000, 'rust sqlx')
-parseRustRes("sqlx select 1", TEXT, SELECT_1, 'rust sqlx')
-parseRustRes("sqlx select 1000 rows", TEXT, SELECT_1000_ROWS, 'rust sqlx')
-parseRustRes("sqlx select 1000 rows binary", BINARY_EXECUTE_ONLY, SELECT_1000_ROWS, 'rust sqlx')
-parseRustRes("sqlx select 100 int columns", TEXT, SELECT_100, 'rust sqlx')
+    parseRustRes("sqlx do 1", TEXT, DO_1, 'rust sqlx')
+    parseRustRes("sqlx do 1000 param", BINARY_EXECUTE_ONLY, DO_1000, 'rust sqlx')
+    parseRustRes("sqlx select 1", TEXT, SELECT_1, 'rust sqlx')
+    parseRustRes("sqlx select 1000 rows", TEXT, SELECT_1000_ROWS, 'rust sqlx')
+    parseRustRes("sqlx select 1000 rows binary", BINARY_EXECUTE_ONLY, SELECT_1000_ROWS, 'rust sqlx')
+    parseRustRes("sqlx select 100 int columns", TEXT, SELECT_100, 'rust sqlx')
 
-parseRustRes("mysql_async do 1", TEXT, DO_1, 'rust mysql_async')
-parseRustRes("mysql_async do 1000 param", BINARY_EXECUTE_ONLY, DO_1000, 'rust mysql_async')
-parseRustRes("mysql_async select 1", TEXT, SELECT_1, 'rust mysql_async')
-parseRustRes("mysql_async select 1000 rows", TEXT, SELECT_1000_ROWS, 'rust mysql_async')
-parseRustRes("mysql_async select 1000 rows binary", BINARY_EXECUTE_ONLY, SELECT_1000_ROWS, 'rust mysql_async')
-parseRustRes("mysql_async select 100 int columns", TEXT, SELECT_100, 'rust mysql_async')
+    parseRustRes("mysql_async do 1", TEXT, DO_1, 'rust mysql_async')
+    parseRustRes("mysql_async do 1000 param", BINARY_EXECUTE_ONLY, DO_1000, 'rust mysql_async')
+    parseRustRes("mysql_async select 1", TEXT, SELECT_1, 'rust mysql_async')
+    parseRustRes("mysql_async select 1000 rows", TEXT, SELECT_1000_ROWS, 'rust mysql_async')
+    parseRustRes("mysql_async select 1000 rows binary", BINARY_EXECUTE_ONLY, SELECT_1000_ROWS, 'rust mysql_async')
+    parseRustRes("mysql_async select 100 int columns", TEXT, SELECT_100, 'rust mysql_async')
 
 
 def parsePythonBenchResults(file, connType):
     if(os.path.exists(file)):
         f = open(file, 'r')
-        data = json.load(f)['benchmarks']
+        try:
+            data = json.load(f)['benchmarks']
+        except (json.JSONDecodeError, KeyError):
+            print(f"Warning: Could not parse {file}, skipping")
+            f.close()
+            return
 
         for i in data:
             bench = ""
             type = TEXT
-            val = 0
-            for tmpVal in i['runs'][1]['values']:
-                val += float(tmpVal)
-            length = len(i['runs'][1]['values'])
-            val = around(1 / (val / length))
-            if "DO 1" == i['metadata']['name']:
+            
+            # New pytest-benchmark format: mean time in seconds, convert to ops/sec
+            mean_time = i['stats']['mean']
+            val = around(1.0 / mean_time)
+            
+            # Extract benchmark name from test name (e.g., "test_bench_do_1[mariadb]")
+            test_name = i['name']
+            
+            if "test_bench_do_1[" in test_name or "test_do_1[" in test_name:
                 bench = DO_1
-            elif "BULK Insert" == i['metadata']['name']:
+            elif "test_do_1_async[" in test_name:
+                bench = DO_1
+            elif "test_bench_insert_batch[" in test_name or "test_insert_batch[" in test_name:
                 bench = BATCH_100
-                type = BULK
-                if (connType == "mysql"):
-                    type = BINARY
-            elif "select 1" == i['metadata']['name']:
+                # Check if it's bulk insert based on driver
+                if connType in ["mariadb", "mariadb_c"]:
+                    type = BULK
+                else:
+                    type = REWRITE
+            elif "test_insert_batch_async[" in test_name:
+                bench = BATCH_100
+                # Check if it's bulk insert based on driver
+                if connType in ["async-mariadb"]:
+                    type = BULK
+                else:
+                    type = REWRITE
+            elif "test_bench_select_1[" in test_name or "test_select_1[" in test_name:
                 bench = SELECT_1
-            elif "select_100_cols" == i['metadata']['name']:
+            elif "test_select_1_async[" in test_name:
+                bench = SELECT_1
+            elif "test_select_1_pool[" in test_name:
+                bench = SELECT_1_POOL
+            elif "test_select_100_cols_text[" in test_name:
                 bench = SELECT_100
                 type = TEXT
-            elif "select_1000_rows" == i['metadata']['name']:
-                bench = SELECT_1000_ROWS
+            elif "test_select_100_cols_async[" in test_name:
+                bench = SELECT_100
                 type = TEXT
-            elif "select 1000 rows - BINARY" == i['metadata']['name']:
-                bench = SELECT_1000_ROWS
-                type = BINARY_EXECUTE_ONLY
-            elif "select_100_cols_execute" == i['metadata']['name']:
+            elif "test_select_100_cols_binary[" in test_name:
                 bench = SELECT_100
                 type = BINARY_EXECUTE_ONLY
-            elif "DO 1000 params" == i['metadata']['name']:
+            elif "test_bench_select_100_cols[" in test_name or "test_select_100_cols[" in test_name:
+                bench = SELECT_100
+                if "execute" in test_name.lower() or "binary" in test_name.lower():
+                    type = BINARY_EXECUTE_ONLY
+                else:
+                    type = TEXT
+            elif "test_select_1000_rows_text[" in test_name:
+                bench = SELECT_1000_ROWS
+                type = TEXT
+            elif "test_select_1000_rows_async[" in test_name:
+                bench = SELECT_1000_ROWS
+                type = TEXT
+            elif "test_select_1000_rows_binary[" in test_name:
+                bench = SELECT_1000_ROWS
+                type = BINARY_EXECUTE_ONLY
+            elif "test_bench_select_1000_rows[" in test_name or "test_select_1000_rows[" in test_name:
+                bench = SELECT_1000_ROWS
+                if "binary" in test_name.lower():
+                    type = BINARY_EXECUTE_ONLY
+                else:
+                    type = TEXT
+            elif "test_do_1000_params_text[" in test_name:
+                bench = DO_1000
+                type = TEXT
+            elif "test_do_1000_params_async[" in test_name:
+                bench = DO_1000
+                type = TEXT
+            elif "test_do_1000_params_binary[" in test_name:
                 bench = DO_1000
                 type = BINARY_EXECUTE_ONLY
             else:
-                print("bench not recognized : " + i['metadata']['name'])
+                print("bench not recognized : " + test_name)
 
             if bench != "":
                 if not bench in res:
@@ -385,109 +454,220 @@ def parsePythonBenchResults(file, connType):
 
         f.close()
 
-parsePythonBenchResults("bench_results_python_mariadb_results.json", "mariadb")
-parsePythonBenchResults("bench_results_python_mysql_results.json", "mysql")
+if filter_language is None or filter_language == 'python':
+    parsePythonBenchResults("bench_results_python_mariadb_results.json", "mariadb")
+    parsePythonBenchResults("bench_results_python_mariadb_c_results.json", "mariadb_c")
+    parsePythonBenchResults("bench_results_python_async-mariadb_results.json", "async-mariadb")
+    parsePythonBenchResults("bench_results_python_pymysql_results.json", "pymysql")
+    parsePythonBenchResults("bench_results_python_mysql_connector_results.json", "mysql_connector")
+    parsePythonBenchResults("bench_results_python_mysql_connector_async_results.json", "mysql_connector_async")
+    parsePythonBenchResults("bench_results_python_asyncmy_results.json", "asyncmy")
 
 
 
-connectorTypes = ()
+# Define async drivers
+ASYNC_DRIVERS = [
+    'async-mariadb', 'mysql_connector_async', 'asyncmy',  # Python async only
+    'sqlx', 'mysql_async',  # Rust async
+    'mysql', 'community',  # .NET (both MySql.Data and MySqlConnector are async)
+    'mysql2', 'mariadb'  # Node.js (both mysql2 and mariadb are async)
+]
+
+# Sync drivers (for reference):
+# - Java: mysql, mariadb (sync)
+# - C: mysql, mariadb (sync)
+# - Go: (sync)
+# - Rust: mysql (sync version)
+# - Python: mariadb, mariadb_c, pymysql, mysql_connector (sync)
+
+def is_async_driver(connType):
+    """Check if a connector type is an async driver."""
+    # Check for Node.js drivers (all async)
+    if connType.startswith('node '):
+        return True
+    
+    # Check for .NET drivers (all async)
+    if connType.startswith('.net '):
+        return True
+    
+    # Check for Rust async drivers
+    if 'sqlx' in connType or 'mysql_async' in connType:
+        return True
+    
+    # Check for Python async drivers
+    parts = connType.split()
+    driver = parts[1] if len(parts) > 1 else ""
+    if driver in ['async-mariadb', 'mysql_connector_async', 'asyncmy']:
+        return True
+    
+    return False
+
+# Separate sync and async connector types
+syncConnectorTypes = ()
+asyncConnectorTypes = ()
 
 for bench in res:
     for type in res[bench]:
         for connType in res[bench][type]:
-            if not connType in connectorTypes:
-                connectorTypes = connectorTypes + (connType,)
+            if is_async_driver(connType):
+                if not connType in asyncConnectorTypes:
+                    asyncConnectorTypes = asyncConnectorTypes + (connType,)
+            else:
+                if not connType in syncConnectorTypes:
+                    syncConnectorTypes = syncConnectorTypes + (connType,)
+
+# Select which connector types to display based on filter_mode
+if filter_mode == 'sync':
+    connectorTypes = syncConnectorTypes
+elif filter_mode == 'async':
+    connectorTypes = asyncConnectorTypes
+else:  # 'all'
+    connectorTypes = syncConnectorTypes + asyncConnectorTypes
 
 
-header1 = "{:53} |".format("")
-for connectorType in connectorTypes:
-    header1 = header1 + "{:14}|".format("".ljust(14,"-"))
-print(header1)
-header = "{:53} |".format("")
-for connectorType in connectorTypes:
-    v = connectorType
-    if (len(v) > 13):
-        v = v[0:12] + "."
-    header = header + " {:13}|".format(v)
-print(header)
+def print_results_table(connectorTypes, title=None):
+    """Print a results table for the given connector types."""
+    if not connectorTypes:
+        return
+        
+    if title:
+        print("")
+        print(title)
+        print("")
+    
+    # Top border
+    header1 = "{:53} |".format("")
+    for connectorType in connectorTypes:
+        header1 = header1 + "{:14}|".format("".ljust(14,"-"))
+    print(header1)
 
-header1 = "{:54}|".format("".ljust(54,"-"))
-for connectorType in connectorTypes:
-    header1 = header1 + "{:14}|".format("".ljust(14,"-"))
-print(header1)
+    # First line of connector names (language)
+    header_line1 = "{:53} |".format("")
+    for connectorType in connectorTypes:
+        parts = connectorType.split()
+        language = parts[0] if len(parts) > 0 else ""
+        if len(language) > 13:
+            language = language[0:12] + "."
+        header_line1 = header_line1 + " {:13}|".format(language)
+    print(header_line1)
 
+    # Second line of connector names (driver)
+    header_line2 = "{:53} |".format("")
+    for connectorType in connectorTypes:
+        parts = connectorType.split()
+        driver = parts[1] if len(parts) > 1 else ""
+        if len(driver) > 13:
+            driver = driver[0:12] + "."
+        header_line2 = header_line2 + " {:13}|".format(driver)
+    print(header_line2)
 
-form = "{:30} - {:20} |"
+    # Bottom border
+    header1 = "{:54}|".format("".ljust(54,"-"))
+    for connectorType in connectorTypes:
+        header1 = header1 + "{:14}|".format("".ljust(14,"-"))
+    print(header1)
 
-for bench in res:
-    for type in res[bench]:
+    # Print detailed results
+    for bench in res:
+        for type in res[bench]:
+            # Only calculate max from connectors in this table
+            maxVal = 0
+            for connectorType in connectorTypes:
+                if connectorType in res[bench][type]:
+                    if res[bench][type][connectorType] > maxVal:
+                        maxVal = res[bench][type][connectorType]
+            
+            if maxVal == 0:  # Skip if no data for these connectors
+                continue
+                
+            line = "{:30} - {:20} |".format(bench, type)
+            for connectorType in connectorTypes:
+                if (not connectorType in res[bench][type]):
+                    line = line + "{:6.0} | {:4.0} |".format("", "")
+                else:
+                    val = res[bench][type][connectorType]
+                    line = line + "{:6.0f} | {:4.0%} |".format(val, val / maxVal)
+            print(line)
+    print(header1)
+
+    # Aggregate results
+    result2 = {}
+    for bench in res:
+        for type in res[bench]:
+            for connectorType in connectorTypes:
+                if (connectorType in res[bench][type]):
+                    val = res[bench][type][connectorType]
+                    if not bench in result2:
+                        result2[bench] = {}
+                    if not connectorType in result2[bench]:
+                        result2[bench][connectorType] = val
+                    else:
+                        currVal = result2[bench][connectorType]
+                        if (currVal < val):
+                            result2[bench][connectorType] = val
+
+    print("")
+    print("")
+    print("agreggate results:")
+    print("")
+
+    # Top border
+    header1 = "{:30} |".format("")
+    for connectorType in connectorTypes:
+        header1 = header1 + "{:14}|".format("".ljust(14,"-"))
+    print(header1)
+
+    # First line of connector names (language)
+    header_line1 = "{:30} |".format("")
+    for connectorType in connectorTypes:
+        parts = connectorType.split()
+        language = parts[0] if len(parts) > 0 else ""
+        if len(language) > 13:
+            language = language[0:12] + "."
+        header_line1 = header_line1 + " {:13}|".format(language)
+    print(header_line1)
+
+    # Second line of connector names (driver)
+    header_line2 = "{:30} |".format("")
+    for connectorType in connectorTypes:
+        parts = connectorType.split()
+        driver = parts[1] if len(parts) > 1 else ""
+        if len(driver) > 13:
+            driver = driver[0:12] + "."
+        header_line2 = header_line2 + " {:13}|".format(driver)
+    print(header_line2)
+
+    # Bottom border
+    header1 = "{:31}|".format("".ljust(31,"-"))
+    for connectorType in connectorTypes:
+        header1 = header1 + "{:14}|".format("".ljust(14,"-"))
+    print(header1)
+
+    # Print aggregate results
+    for bench in result2:
         maxVal = 0
-        for connectorType in res[bench][type]:
-            if (res[bench][type][connectorType] > maxVal):
-                maxVal = res[bench][type][connectorType]
-        line = "{:30} - {:20} |".format(bench, type)
+        for connectorType in result2[bench]:
+            if (result2[bench][connectorType] > maxVal):
+                maxVal = result2[bench][connectorType]
+        line = "{:30} |".format(bench)
         for connectorType in connectorTypes:
-            if (not connectorType in res[bench][type]):
+            if (not connectorType in result2[bench]):
                 line = line + "{:6.0} | {:4.0} |".format("", "")
             else:
-                val = res[bench][type][connectorType]
+                val = result2[bench][connectorType]
                 line = line + "{:6.0f} | {:4.0%} |".format(val, val / maxVal)
         print(line)
-print(header1)
-
-result2 = {}
-for bench in res:
-    for type in res[bench]:
-        for connectorType in connectorTypes:
-            if (connectorType in res[bench][type]):
-                val = res[bench][type][connectorType]
-                if not bench in result2:
-                    result2[bench] = {}
-                if not connectorType in result2[bench]:
-                    result2[bench][connectorType] = val
-                else:
-                    currVal = result2[bench][connectorType]
-                    if (currVal < val):
-                        result2[bench][connectorType] = val
+    print(header1)
 
 
-print("")
-print("")
-print("agreggate results:")
-print("")
-
-header1 = "{:30} |".format("")
-for connectorType in connectorTypes:
-    header1 = header1 + "{:14}|".format("".ljust(14,"-"))
-print(header1)
-header = "{:30} |".format("")
-for connectorType in connectorTypes:
-    v = connectorType
-    if (len(v) > 13):
-        v = v[0:12] + "."
-    header = header + " {:13}|".format(v)
-print(header)
-
-header1 = "{:31}|".format("".ljust(31,"-"))
-for connectorType in connectorTypes:
-    header1 = header1 + "{:14}|".format("".ljust(14,"-"))
-print(header1)
-
-
-form = "{:30} |"
-
-for bench in result2:
-    maxVal = 0
-    for connectorType in result2[bench]:
-        if (result2[bench][connectorType] > maxVal):
-            maxVal = result2[bench][connectorType]
-    line = "{:30} |".format(bench)
-    for connectorType in connectorTypes:
-        if (not connectorType in result2[bench]):
-            line = line + "{:6.0} | {:4.0} |".format("", "")
-        else:
-            val = result2[bench][connectorType]
-            line = line + "{:6.0f} | {:4.0%} |".format(val, val / maxVal)
-    print(line)
-print(header1)
+# Print tables based on filter_mode
+if filter_mode == 'all':
+    # Print separate tables for sync and async
+    if syncConnectorTypes:
+        print_results_table(syncConnectorTypes, "=== SYNC DRIVERS ===")
+    if asyncConnectorTypes:
+        print_results_table(asyncConnectorTypes, "=== ASYNC DRIVERS ===")
+else:
+    # Print single table for filtered mode
+    print_results_table(connectorTypes)
 

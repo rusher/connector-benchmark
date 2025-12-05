@@ -197,8 +197,8 @@ BENCHMARK(BM_SELECT_1)->Name(TYPE + " SELECT 1")->Threads(MAX_THREAD)->UseRealTi
 
 
 
-void select_1000_rows(benchmark::State& state, MYSQL* conn) {
-    if (mysql_query(conn, "select * from 1000rows")) {
+void select_1000_rows_text(benchmark::State& state, MYSQL* conn) {
+    if (mysql_query(conn, "select * from 1000rows where 1 = 1")) {
           fprintf(stderr, "%s\n", mysql_error(conn));
           mysql_close(conn);
           exit(1);
@@ -224,18 +224,102 @@ void select_1000_rows(benchmark::State& state, MYSQL* conn) {
     mysql_free_result(result);
 }
 
-static void BM_SELECT_1000_ROWS(benchmark::State& state) {
+void select_1000_rows_binary(benchmark::State& state, MYSQL_STMT* stmt, MYSQL_BIND* result_bind, int* val1, char* val2) {
+    if (mysql_stmt_execute(stmt)) {
+        fprintf(stderr, "%s\n", mysql_stmt_error(stmt));
+        exit(1);
+    }
+    
+    while (mysql_stmt_fetch(stmt) == 0) {
+        benchmark::DoNotOptimize(*val1);
+        benchmark::DoNotOptimize(val2);
+        benchmark::ClobberMemory();
+    }
+}
+
+static void BM_SELECT_1000_ROWS_TEXT(benchmark::State& state) {
   MYSQL *conn = connect("");
   int numOperation = 0;
   for (auto _ : state) {
-    select_1000_rows(state, conn);
+    select_1000_rows_text(state, conn);
     numOperation++;
   }
   state.counters[OPERATION_PER_SECOND_LABEL] = benchmark::Counter(numOperation, benchmark::Counter::kIsRate);
   mysql_close(conn);
 }
 
-BENCHMARK(BM_SELECT_1000_ROWS)->Name(TYPE + " SELECT 1000 rows (int + char(32))")->Threads(MAX_THREAD)->UseRealTime();
+static void BM_SELECT_1000_ROWS_BINARY(benchmark::State& state) {
+  MYSQL *conn = connect("");
+  
+  // Prepare statement once before benchmark loop
+  MYSQL_STMT *stmt = mysql_stmt_init(conn);
+  if (!stmt) {
+      fprintf(stderr, "mysql_stmt_init() failed\n");
+      mysql_close(conn);
+      exit(1);
+  }
+  
+  const char* query = "select * from 1000rows where 1 = ?";
+  if (mysql_stmt_prepare(stmt, query, strlen(query))) {
+      fprintf(stderr, "%s\n", mysql_stmt_error(stmt));
+      mysql_stmt_close(stmt);
+      mysql_close(conn);
+      exit(1);
+  }
+  
+  MYSQL_BIND bind[1];
+  int param_value = 1;
+  memset(bind, 0, sizeof(bind));
+  bind[0].buffer_type = MYSQL_TYPE_LONG;
+  bind[0].buffer = (char *)&param_value;
+  
+  if (mysql_stmt_bind_param(stmt, bind)) {
+      fprintf(stderr, "%s\n", mysql_stmt_error(stmt));
+      mysql_stmt_close(stmt);
+      mysql_close(conn);
+      exit(1);
+  }
+  
+  MYSQL_BIND result_bind[2];
+  int val1;
+  char val2[33];
+  unsigned long val2_length;
+#ifndef BENCHMARK_MYSQL
+  my_bool val2_is_null;  // MariaDB uses my_bool
+#else
+  bool val2_is_null;     // MySQL 8.0+ uses bool
+#endif
+  
+  memset(result_bind, 0, sizeof(result_bind));
+  result_bind[0].buffer_type = MYSQL_TYPE_LONG;
+  result_bind[0].buffer = (char *)&val1;
+  result_bind[1].buffer_type = MYSQL_TYPE_STRING;
+  result_bind[1].buffer = val2;
+  result_bind[1].buffer_length = 33;
+  result_bind[1].length = &val2_length;
+  result_bind[1].is_null = &val2_is_null;
+  
+  if (mysql_stmt_bind_result(stmt, result_bind)) {
+      fprintf(stderr, "%s\n", mysql_stmt_error(stmt));
+      mysql_stmt_close(stmt);
+      mysql_close(conn);
+      exit(1);
+  }
+  
+  // Benchmark loop - only execute and fetch
+  int numOperation = 0;
+  for (auto _ : state) {
+    select_1000_rows_binary(state, stmt, result_bind, &val1, val2);
+    numOperation++;
+  }
+  
+  state.counters[OPERATION_PER_SECOND_LABEL] = benchmark::Counter(numOperation, benchmark::Counter::kIsRate);
+  mysql_stmt_close(stmt);
+  mysql_close(conn);
+}
+
+BENCHMARK(BM_SELECT_1000_ROWS_TEXT)->Name(TYPE + " SELECT 1000 rows (int + char(32))")->Threads(MAX_THREAD)->UseRealTime();
+BENCHMARK(BM_SELECT_1000_ROWS_BINARY)->Name(TYPE + " SELECT 1000 rows (int + char(32)) - BINARY")->Threads(MAX_THREAD)->UseRealTime();
 
 void select_100_int_cols(benchmark::State& state, MYSQL* conn) {
     int rc;
@@ -374,34 +458,54 @@ BENCHMARK(BM_SELECT_100_INT_COLS_PREPARED)->Name(TYPE + " SELECT 100 int cols - 
 
 
 
-//void do_1000_params(benchmark::State& state, MYSQL* conn, const char* query) {
-//  int rc;
-//  rc = mysql_query(conn, query);
-//  check_conn_rc(rc, conn);
-//
-//  int id;
-//  benchmark::DoNotOptimize(id = mysql_insert_id(conn));
-//}
-//
-//static void BM_DO_1000_PARAMS(benchmark::State& state) {
-//  MYSQL *conn = connect("");
-//  std::string query = "DO 1";
-//  for (int i = 1; i < 1000; i++) {
-//    query += "," + std::to_string(i);
-//  }
-//  const char* queryChar = query.c_str();
-//  int rc;
-//
-//  int numOperation = 0;
-//  for (auto _ : state) {
-//    do_1000_params(state, conn, queryChar);
-//    numOperation++;
-//  }
-//  state.counters[OPERATION_PER_SECOND_LABEL] = benchmark::Counter(numOperation, benchmark::Counter::kIsRate);
-//  mysql_close(conn);
-//}
-//
-//BENCHMARK(BM_DO_1000_PARAMS)->Name(TYPE + " DO 1000 params")->Threads(MAX_THREAD)->UseRealTime();
+
+void do_1000_params_binary(benchmark::State& state, MYSQL* conn, MYSQL_STMT* stmt) {
+  int rc;
+  
+  rc = mysql_stmt_execute(stmt);
+  check_conn_rc(rc, conn);
+}
+
+static void BM_DO_1000_PARAMS_BINARY(benchmark::State& state) {
+  MYSQL *conn = connect("");
+  MYSQL_STMT *stmt = mysql_stmt_init(conn);
+  
+  // Build query with 1000 placeholders: "DO ?,?,?..."
+  std::string query = "DO ?";
+  for (int i = 1; i < 1000; i++) {
+    query += ",?";
+  }
+  
+  int rc;
+  rc = mysql_stmt_prepare(stmt, query.c_str(), (unsigned long)query.size());
+  check_conn_rc(rc, conn);
+  
+  // Prepare bind parameters - 1000 integers
+  int int_data[1000];
+  MYSQL_BIND my_bind[1000];
+  memset(my_bind, 0, sizeof(my_bind));
+  
+  for (int i = 0; i < 1000; i++) {
+    int_data[i] = i + 1;
+    my_bind[i].buffer_type = MYSQL_TYPE_LONG;
+    my_bind[i].buffer = (char *) &int_data[i];
+    my_bind[i].is_null = 0;
+  }
+  
+  rc = mysql_stmt_bind_param(stmt, my_bind);
+  check_stmt_rc(rc, stmt, conn);
+  
+  int numOperation = 0;
+  for (auto _ : state) {
+    do_1000_params_binary(state, conn, stmt);
+    numOperation++;
+  }
+  state.counters[OPERATION_PER_SECOND_LABEL] = benchmark::Counter(numOperation, benchmark::Counter::kIsRate);
+  mysql_stmt_close(stmt);
+  mysql_close(conn);
+}
+
+BENCHMARK(BM_DO_1000_PARAMS_BINARY)->Name(TYPE + " DO 1000 params - BINARY execute only")->Threads(MAX_THREAD)->UseRealTime();
 
 
 

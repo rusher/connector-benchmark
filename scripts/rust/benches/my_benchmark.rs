@@ -181,7 +181,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     }
 
     group.bench_function("select 1000 rows", |b| b.iter(|| {
-        let selected_rest = conn.query_map("select * from 1000rows",
+        let selected_rest = conn.query_map("select * from 1000rows where 1 = 1",
             |(id, val)| {
                 ResRow {id, val}
             },
@@ -196,7 +196,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     group.bench_function("sqlx select 1000 rows", |b| {
         b.iter(|| {
             runtime.block_on(async {
-                let rows: Vec<ResRow2> = sqlx::query_as("SELECT * FROM 1000rows")
+                let rows: Vec<ResRow2> = sqlx::query_as("SELECT * FROM 1000rows WHERE 1 = ?")
+                    .bind(1)
                     .fetch_all(&pool)
                     .await
                     .unwrap();
@@ -211,7 +212,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 let mut conn = asyncPool.get_conn().await.unwrap();
                 let rows: Vec<ResRow> = mysql_async::prelude::Queryable::query_map(
                     &mut conn,
-                    "select * from 1000rows",
+                    "select * from 1000rows where 1 = 1",
                     |(id, val)| {
                         ResRow {id, val}
                     },
@@ -223,7 +224,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     group.bench_function("select 1000 rows binary", |b| b.iter(|| {
-        let selected_rest = conn.exec_map("select * from 1000rows", (),
+        let selected_rest = conn.exec_map("select * from 1000rows where 1 = ?", (1,),
                                            |(id, val)| {
                                                ResRow {id, val}
                                            },
@@ -237,8 +238,8 @@ fn criterion_benchmark(c: &mut Criterion) {
                 let mut conn = asyncPool.get_conn().await.unwrap();
                 let rows: Vec<ResRow> = mysql_async::prelude::Queryable::exec_map(
                     &mut conn,
-                    "select * from 1000rows",
-                    (),
+                    "select * from 1000rows where 1 = ?",
+                    (1,),
                     |(id, val)| {
                         ResRow {id, val}
                     },

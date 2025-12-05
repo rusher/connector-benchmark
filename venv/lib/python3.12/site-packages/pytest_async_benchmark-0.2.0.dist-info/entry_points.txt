@@ -1,0 +1,2 @@
+[pytest11]
+async_bench = pytest_async_benchmark.plugin

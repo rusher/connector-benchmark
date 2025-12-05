@@ -27,7 +27,7 @@ class Program
             .AddValidator(JitOptimizationsValidator.FailOnError)
             .AddDiagnoser(MemoryDiagnoser.Default)
             .AddColumn(StatisticColumn.AllStatistics)
-            .AddJob(Job.Default.WithRuntime(CoreRuntime.Core70))
+            .AddJob(Job.Default.WithRuntime(CoreRuntime.Core80))
             .AddExporter(JsonExporter.Brief);
 
         var summary = BenchmarkRunner.Run<MySqlClient>(customConfig);
@@ -128,7 +128,8 @@ public class MySqlClient
     public async Task<int> Select1000rowsText()
     {
         using var cmd = Connection.CreateCommand();
-        cmd.CommandText = "select * from 1000rows";
+        cmd.CommandText = "select * from 1000rows where 1 = ?";
+        cmd.Parameters.Add(new MySqlConnector.MySqlParameter() { Value = 1 });
         using var reader = await cmd.ExecuteReaderAsync();
         int val = 0;
         while (await reader.ReadAsync())
@@ -144,7 +145,8 @@ public class MySqlClient
     public async Task<int> Select1000rowsBinary()
     {
         using var cmd = Connection.CreateCommand();
-        cmd.CommandText = "select * from 1000rows";
+        cmd.CommandText = "select * from 1000rows where 1 = ?";
+        cmd.Parameters.Add(new MySqlConnector.MySqlParameter() { Value = 1 });
         cmd.Prepare();
         using var reader = await cmd.ExecuteReaderAsync();
         int val = 0;
@@ -209,8 +211,25 @@ public class MySqlClient
 
     private DbConnection Connection { get; set; }
 
-    // TODO: move to config file
-    static string s_connectionString = "server=127.0.0.1;user id=root;port=3306;ssl mode=none;Use Affected Rows=true;Connection Reset=false;Default Command Timeout=0;AutoEnlist=false;database=bench;";
+    // Connection string from environment variables
+    static string s_connectionString = BuildConnectionString();
+    
+    static string BuildConnectionString()
+    {
+        var host = Environment.GetEnvironmentVariable("TEST_DB_HOST") ?? "127.0.0.1";
+        var port = Environment.GetEnvironmentVariable("TEST_DB_PORT") ?? "3306";
+        var user = Environment.GetEnvironmentVariable("TEST_DB_USER") ?? "root";
+        var password = Environment.GetEnvironmentVariable("TEST_DB_PASSWORD") ?? "";
+        var database = Environment.GetEnvironmentVariable("TEST_DB_DATABASE") ?? "bench";
+        var sslMode = Environment.GetEnvironmentVariable("TEST_USE_SSL") == "true" ? "Required" : "none";
+        
+        var connStr = $"server={host};user id={user};port={port};ssl mode={sslMode};Use Affected Rows=true;Connection Reset=false;Default Command Timeout=0;AutoEnlist=false;database={database};";
+        if (!string.IsNullOrEmpty(password))
+        {
+            connStr += $"password={password};";
+        }
+        return connStr;
+    }
 
     Dictionary<string, DbConnection> m_connections = new Dictionary<string, DbConnection>();
 }

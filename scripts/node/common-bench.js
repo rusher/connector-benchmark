@@ -45,7 +45,7 @@ const minimumSamples = 300;
 const createBenchSuite = async (bench, res) => {
   results = res;
   const reportData = [];
-  const sources = await loadsources(bench.requiresPool, bench.requireExecute, bench.mariadbOnly);
+  const sources = await loadsources(bench.requiresPool, bench.requireExecute, bench.mariadbOnly, bench.poolSize);
 
   const suite = new Benchmark.Suite('test');
   suite.add('warmup', {
@@ -96,8 +96,10 @@ const createBenchSuite = async (bench, res) => {
 //************************************************
 // Load connections / pools
 //************************************************
-const loadsources = async (requiresPool, requireExecute, mariadbOnly) => {
+const loadsources = async (requiresPool, requireExecute, mariadbOnly, poolSize) => {
   const sources = {};
+  const connectionLimit = poolSize || 1;
+  
   if (requiresPool == undefined || requiresPool === false) {
     if (mysql) {
       if (!mariadbOnly && (requireExecute == undefined || requireExecute === false)) {
@@ -110,12 +112,12 @@ const loadsources = async (requiresPool, requireExecute, mariadbOnly) => {
     sources['mariadb'] = await mariadb.createConnection(Object.assign({}, config));
   } else {
     if (!mariadbOnly && mysql) {
-      sources['mysql'] = await mysql.createPool(Object.assign({ connectionLimit: 1 }, config));
+      sources['mysql'] = await mysql.createPool(Object.assign({ connectionLimit: connectionLimit }, config));
     }
     if (!mariadbOnly && mysql2) {
-      sources['mysql2'] = mysql2.createPool(Object.assign({ connectionLimit: 1 }, config));
+      sources['mysql2'] = mysql2.createPool(Object.assign({ connectionLimit: connectionLimit }, config));
     }
-    sources['mariadb'] = mariadb.createPool(Object.assign({ connectionLimit: 1 }, config));
+    sources['mariadb'] = mariadb.createPool(Object.assign({ connectionLimit: connectionLimit }, config));
   }
 
   if (!mariadbOnly && mysql2) {
