@@ -25,7 +25,7 @@ def around(x):
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Show benchmark results')
-parser.add_argument('-l', '--language', type=str, help='Filter by language (java, c, cpp, python, go, rust, nodejs, dotnet). Multiple languages can be separated by comma: -l java,c')
+parser.add_argument('-l', '--language', type=str, help='Filter by language (java, c, cpp, odbc, python, go, rust, nodejs, dotnet). Multiple languages can be separated by comma: -l java,c')
 parser.add_argument('--mode', type=str, choices=['sync', 'async', 'all'], default='all', help='Show sync, async, or all drivers (default: all)')
 args = parser.parse_args()
 
@@ -214,7 +214,12 @@ def parseBenchResults(file, connType, language):
             type = TEXT
 
             if os.getenv("TEST_DB_THREAD", default="1") + "_mean" in i['name']:
-                val = around(float(i['nb operations per second']))
+                # Calculate operations per second from real_time (in microseconds)
+                if 'nb operations per second' in i:
+                    val = around(float(i['nb operations per second']))
+                else:
+                    # Convert from microseconds to operations per second
+                    val = around(1000000.0 / float(i['real_time']))
                 if "DO 1/" in i['name']:
                     bench = DO_1
                 elif "insert batch using bulk/" in i['name']:
@@ -249,6 +254,24 @@ def parseBenchResults(file, connType, language):
                 elif "DO 1000 params - BINARY execute only/" in i['name']:
                     bench = DO_1000
                     type = BINARY_EXECUTE_ONLY
+                # ODBC benchmark names
+                elif "BM_SELECT_1/" in i['name']:
+                    bench = SELECT_1
+                elif "BM_SELECT_1000_ROWS_TEXT/" in i['name']:
+                    bench = SELECT_1000_ROWS
+                    type = TEXT
+                elif "BM_SELECT_1000_ROWS_BINARY/" in i['name']:
+                    bench = SELECT_1000_ROWS
+                    type = BINARY_EXECUTE_ONLY
+                elif "BM_SELECT_100_INT_TEXT/" in i['name']:
+                    bench = SELECT_100
+                    type = TEXT
+                elif "BM_SELECT_100_INT_BINARY/" in i['name']:
+                    bench = SELECT_100
+                    type = BINARY_EXECUTE_ONLY
+                elif "BM_BATCH_100_INSERT_BINARY/" in i['name']:
+                    bench = BATCH_100
+                    type = BINARY_EXECUTE_ONLY
                 else:
                     print("bench not recognized : " + i['name'])
 
@@ -271,6 +294,10 @@ if filter_languages is None or any(lang in filter_languages for lang in ['c++', 
     parseBenchResults("./bench_results_cpp_mysql.json", "mysql", "c++")
     parseBenchResults("./bench_results_cpp_mariadb.json", "mariadb", "c++")
 
+# ODBC results
+if filter_languages is None or 'odbc' in filter_languages:
+    parseBenchResults("./bench_results_odbc_mariadb.json", "mariadb", "odbc")
+    parseBenchResults("./bench_results_odbc_mysql.json", "mysql", "odbc")
 
 
 if(os.path.exists('./bench_results_nodejs.json') and (filter_languages is None or any(lang in filter_languages for lang in ['nodejs', 'node']))):

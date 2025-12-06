@@ -103,7 +103,7 @@ const loadsources = async (requiresPool, requireExecute, mariadbOnly, poolSize) 
   if (requiresPool == undefined || requiresPool === false) {
     if (mysql) {
       if (!mariadbOnly && (requireExecute == undefined || requireExecute === false)) {
-        sources['mysql'] = await mysql.createConnection(Object.assign({}, config));
+        sources['mysql'] = await mysql.createConnection(Object.assign({}, config, { charset: 'utf8mb4' }));
       }
     }
     if (mysql2 && !mariadbOnly) {
@@ -112,7 +112,7 @@ const loadsources = async (requiresPool, requireExecute, mariadbOnly, poolSize) 
     sources['mariadb'] = await mariadb.createConnection(Object.assign({}, config));
   } else {
     if (!mariadbOnly && mysql) {
-      sources['mysql'] = await mysql.createPool(Object.assign({ connectionLimit: connectionLimit }, config));
+      sources['mysql'] = await mysql.createPool(Object.assign({ connectionLimit: connectionLimit, charset: 'utf8mb4' }, config));
     }
     if (!mariadbOnly && mysql2) {
       sources['mysql2'] = mysql2.createPool(Object.assign({ connectionLimit: connectionLimit }, config));

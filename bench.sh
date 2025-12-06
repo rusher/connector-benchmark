@@ -56,6 +56,88 @@ installation_c () {
   apt install -y libmysqlclient-dev
 }
 
+installation_odbc () {
+  apt update
+  apt install -y software-properties-common build-essential cmake libssl-dev unixodbc unixodbc-dev
+  
+  # Accept GitHub SSH host key automatically
+  mkdir -p ~/.ssh
+  ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null || true
+  
+  mkdir -p $PROJ_PATH/repo
+  cd $PROJ_PATH/repo
+  
+  # Install MariaDB ODBC driver
+  if [[ -e "${PROJ_PATH}/repo/mariadb-connector-odbc/" ]]
+  then
+    cd mariadb-connector-odbc
+    git pull
+  else
+    git clone https://github.com/mariadb-corporation/mariadb-connector-odbc.git
+  fi
+
+  # Clean and rebuild MariaDB ODBC
+  rm -rf $PROJ_PATH/repo/build-odbc-mariadb
+  mkdir -p $PROJ_PATH/repo/build-odbc-mariadb
+  cd $PROJ_PATH/repo/build-odbc-mariadb
+  
+  cmake ../mariadb-connector-odbc \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DWITH_SSL=OPENSSL \
+    -DCONC_WITH_UNIT_TESTS=OFF
+  
+  cmake --build . --config Release
+  sudo make install
+  
+  # Install MySQL ODBC driver
+  cd $PROJ_PATH/repo
+  if [[ -e "${PROJ_PATH}/repo/mysql-connector-odbc/" ]]
+  then
+    cd mysql-connector-odbc
+    git pull
+  else
+    git clone https://github.com/mysql/mysql-connector-odbc.git
+  fi
+  
+  # Clean and rebuild MySQL ODBC
+  rm -rf $PROJ_PATH/repo/build-odbc-mysql
+  mkdir -p $PROJ_PATH/repo/build-odbc-mysql
+  cd $PROJ_PATH/repo/build-odbc-mysql
+  
+  cmake ../mysql-connector-odbc \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DWITH_SSL=system \
+    -DMYSQLCLIENT_STATIC_LINKING=ON \
+    -DWITH_UNIXODBC=1 \
+    -DDISABLE_GUI=1
+  
+  cmake --build . --config Release
+  sudo make install
+  
+  # Create ODBC driver configuration for both drivers
+  echo "[MariaDB ODBC]" | sudo tee /etc/odbcinst.ini
+  echo "Description=MariaDB ODBC Driver" | sudo tee -a /etc/odbcinst.ini
+  echo "Driver=/usr/local/lib/mariadb/libmaodbc.so" | sudo tee -a /etc/odbcinst.ini
+  echo "Setup=/usr/local/lib/mariadb/libmaodbc.so" | sudo tee -a /etc/odbcinst.ini
+  echo "FileUsage=1" | sudo tee -a /etc/odbcinst.ini
+  echo "" | sudo tee -a /etc/odbcinst.ini
+  echo "[MySQL ODBC]" | sudo tee -a /etc/odbcinst.ini
+  echo "Description=MySQL ODBC Driver" | sudo tee -a /etc/odbcinst.ini
+  echo "Driver=/usr/local/lib/libmyodbc9w.so" | sudo tee -a /etc/odbcinst.ini
+  echo "Setup=/usr/local/lib/libmyodbc9w.so" | sudo tee -a /etc/odbcinst.ini
+  echo "FileUsage=1" | sudo tee -a /etc/odbcinst.ini
+  
+  # Update library cache
+  sudo ldconfig
+  
+  echo "MariaDB ODBC driver installed at /usr/local/lib/mariadb/libmaodbc.so"
+  echo "ODBC driver registered as 'MariaDB ODBC'"
+  echo "MySQL ODBC driver installed at /usr/local/lib/libmyodbc9w.so"
+  echo "ODBC driver registered as 'MySQL ODBC'"
+}
+
 installation_cpp () {
   apt update
   apt install -y software-properties-common build-essential cmake libssl-dev
@@ -360,6 +442,19 @@ launch_c_bench () {
 
 }
 
+launch_odbc_bench () {
+  cd $PROJ_PATH/scripts/odbc
+  g++ main-benchmark.cc -std=c++17 -isystem $PROJ_PATH/repo/benchmark/include -L$PROJ_PATH/repo/benchmark/build/src -lbenchmark -lpthread -lodbc -o main-benchmark
+  
+  # Run benchmarks with MariaDB ODBC driver
+  export ODBC_DRIVER_NAME="MariaDB ODBC"
+  ./main-benchmark --benchmark_repetitions=30 --benchmark_time_unit=us --benchmark_min_warmup_time=10 --benchmark_counters_tabular=true --benchmark_format=json --benchmark_out=$PROJ_PATH/bench_results_odbc_mariadb.json
+  
+  # Run benchmarks with MySQL ODBC driver
+  export ODBC_DRIVER_NAME="MySQL ODBC"
+  ./main-benchmark --benchmark_repetitions=30 --benchmark_time_unit=us --benchmark_min_warmup_time=10 --benchmark_counters_tabular=true --benchmark_format=json --benchmark_out=$PROJ_PATH/bench_results_odbc_mysql.json
+}
+
 launch_cpp_bench () {
   cd $PROJ_PATH/scripts/cpp
   if [ -n "$TYPE" ] ; then
@@ -509,9 +604,16 @@ if [[ $INSTALLATION == true ]]; then
       installation_setup
       installation_dotnet
       ;;
+    odbc)
+      installation_setup
+      installation_c
+      installation_odbc
+      installation_benchmark
+      ;;
     *)
       installation_setup
       installation_c
+      installation_odbc
       installation_cpp
       installation_python
       installation_benchmark
@@ -555,9 +657,13 @@ else
     dotnet)
       launch_dotnet_bench
       ;;
+    odbc)
+      launch_odbc_bench
+      ;;
     *)
       launch_java_bench
       launch_c_bench
+      launch_odbc_bench
       launch_cpp_bench
       launch_nodejs_bench
       launch_go_bench
