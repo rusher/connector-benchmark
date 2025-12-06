@@ -160,6 +160,45 @@ public class MySqlClient
     }
 
     [Benchmark]
+    public async Task<int> Select1000rowsTextMySql()
+    {
+        using var cmd = Connection.CreateCommand();
+        cmd.CommandText = "select * from 1000rows where 1 = ?";
+        var param = new MySql.Data.MySqlClient.MySqlParameter();
+        param.Value = 1;
+        cmd.Parameters.Add(param);
+        using var reader = await cmd.ExecuteReaderAsync();
+        int val = 0;
+        while (await reader.ReadAsync())
+        {
+            val = reader.GetInt32(0);
+            reader.GetString(1);
+        }
+
+        return val;
+    }
+
+    [Benchmark]
+    public async Task<int> Select1000rowsBinaryMySql()
+    {
+        using var cmd = Connection.CreateCommand();
+        cmd.CommandText = "select * from 1000rows where 1 = ?";
+        var param = new MySql.Data.MySqlClient.MySqlParameter();
+        param.Value = 1;
+        cmd.Parameters.Add(param);
+        cmd.Prepare();
+        using var reader = await cmd.ExecuteReaderAsync();
+        int val = 0;
+        while (await reader.ReadAsync())
+        {
+            val = reader.GetInt32(0);
+            reader.GetString(1);
+        }
+
+        return val;
+    }
+
+    [Benchmark]
     public async Task<int> ExecuteDo1000PrepareParamMySql()
     {
         using var cmd = Connection.CreateCommand();

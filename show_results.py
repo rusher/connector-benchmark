@@ -25,17 +25,20 @@ def around(x):
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Show benchmark results')
-parser.add_argument('-l', '--language', type=str, help='Filter by language (java, c, cpp, python, go, rust, nodejs, dotnet)')
+parser.add_argument('-l', '--language', type=str, help='Filter by language (java, c, cpp, python, go, rust, nodejs, dotnet). Multiple languages can be separated by comma: -l java,c')
 parser.add_argument('--mode', type=str, choices=['sync', 'async', 'all'], default='all', help='Show sync, async, or all drivers (default: all)')
 args = parser.parse_args()
 
-filter_language = args.language.lower() if args.language else None
+# Parse languages - support comma-separated list
+filter_languages = None
+if args.language:
+    filter_languages = [lang.strip().lower() for lang in args.language.split(',')]
 filter_mode = args.mode
 
 res = { }
 
 # JAVA results
-if(os.path.exists('./bench_results_java.json') and (filter_language is None or filter_language == 'java')):
+if(os.path.exists('./bench_results_java.json') and (filter_languages is None or 'java' in filter_languages)):
     f = open('bench_results_java.json', 'r')
     data = json.load(f)
     for i in data:
@@ -96,7 +99,7 @@ if(os.path.exists('./bench_results_java.json') and (filter_language is None or f
 
 
 # GO results
-if(os.path.exists('./bench_results_go.txt') and (filter_language is None or filter_language == 'go')):
+if(os.path.exists('./bench_results_go.txt') and (filter_languages is None or 'go' in filter_languages)):
     f = open('bench_results_go.txt', 'r')
     lines = f.readlines()
     for line in lines:
@@ -144,7 +147,7 @@ if(os.path.exists('./bench_results_go.txt') and (filter_language is None or filt
     f.close()
 
 # DOTNET results
-if(os.path.exists('./bench_results_dotnet.json') and (filter_language is None or filter_language == 'dotnet')):
+if(os.path.exists('./bench_results_dotnet.json') and (filter_languages is None or 'dotnet' in filter_languages)):
     f = open('bench_results_dotnet.json', 'r')
     data = json.load(f)['Benchmarks']
     for i in data:
@@ -163,10 +166,10 @@ if(os.path.exists('./bench_results_dotnet.json') and (filter_language is None or
             elif "ExecuteDo1000PrepareParam" in i['Method']:
                 bench = DO_1000
                 type = BINARY_EXECUTE_ONLY
-            elif "Select1000rowsText" == i['Method']:
+            elif "Select1000rowsText" in i['Method']:
                 bench = SELECT_1000_ROWS
                 type = TEXT
-            elif "Select1000rowsBinary" == i['Method']:
+            elif "Select1000rowsBinary" in i['Method']:
                 bench = SELECT_1000_ROWS
                 type = BINARY_EXECUTE_ONLY
             elif "Select100ColText" in i['Method']:
@@ -243,12 +246,9 @@ def parseBenchResults(file, connType, language):
                 elif "SELECT 1000 rows (int + char(32))/" in i['name']:
                     bench = SELECT_1000_ROWS
                     type = TEXT
-                # elif "DO 1000 params/" in i['name']:
-                #     # if not (language == "c"):
-                #     bench = DO_1000
-                #     type = TEXT
-                #     # if (connType == "mysql"):
-                #     #     type = BINARY
+                elif "DO 1000 params - BINARY execute only/" in i['name']:
+                    bench = DO_1000
+                    type = BINARY_EXECUTE_ONLY
                 else:
                     print("bench not recognized : " + i['name'])
 
@@ -262,18 +262,18 @@ def parseBenchResults(file, connType, language):
         f.close()
 
 # C mariadb results
-if filter_language is None or filter_language == 'c':
+if filter_languages is None or 'c' in filter_languages:
     parseBenchResults("./bench_results_c_mysql.json", "mysql", "c")
     parseBenchResults("./bench_results_c_mariadb.json", "mariadb", "c")
 
 # C++ mariadb results
-if filter_language is None or filter_language in ['c++', 'cpp']:
+if filter_languages is None or any(lang in filter_languages for lang in ['c++', 'cpp']):
     parseBenchResults("./bench_results_cpp_mysql.json", "mysql", "c++")
     parseBenchResults("./bench_results_cpp_mariadb.json", "mariadb", "c++")
 
 
 
-if(os.path.exists('./bench_results_nodejs.json') and (filter_language is None or filter_language in ['nodejs', 'node'])):
+if(os.path.exists('./bench_results_nodejs.json') and (filter_languages is None or any(lang in filter_languages for lang in ['nodejs', 'node']))):
     f = open('bench_results_nodejs.json', 'r')
     data = json.load(f)
 
@@ -335,7 +335,7 @@ def parseRustRes(path, type, bench, name):
         res[bench][type][name] = val
         f.close()
 
-if filter_language is None or filter_language == 'rust':
+if filter_languages is None or 'rust' in filter_languages:
     parseRustRes("do 1", TEXT, DO_1, 'rust mysql')
     parseRustRes("do 1000 param", BINARY_EXECUTE_ONLY, DO_1000, 'rust mysql')
     parseRustRes("select 1", TEXT, SELECT_1, 'rust mysql')
@@ -454,7 +454,7 @@ def parsePythonBenchResults(file, connType):
 
         f.close()
 
-if filter_language is None or filter_language == 'python':
+if filter_languages is None or 'python' in filter_languages:
     parsePythonBenchResults("bench_results_python_mariadb_results.json", "mariadb")
     parsePythonBenchResults("bench_results_python_mariadb_c_results.json", "mariadb_c")
     parsePythonBenchResults("bench_results_python_async-mariadb_results.json", "async-mariadb")
@@ -570,14 +570,22 @@ def print_results_table(connectorTypes, title=None):
     # Print detailed results
     for bench in res:
         for type in res[bench]:
-            # Only calculate max from connectors in this table
-            maxVal = 0
-            for connectorType in connectorTypes:
-                if connectorType in res[bench][type]:
-                    if res[bench][type][connectorType] > maxVal:
-                        maxVal = res[bench][type][connectorType]
+            # Use fastest C connector as reference (100%), or max if C not present
+            refVal = 0
+            # Find the fastest between C mysql and C mariadb
+            for c_connector in ['c mysql', 'c mariadb']:
+                if c_connector in res[bench][type]:
+                    if res[bench][type][c_connector] > refVal:
+                        refVal = res[bench][type][c_connector]
             
-            if maxVal == 0:  # Skip if no data for these connectors
+            # If no C connector, fall back to max value
+            if refVal == 0:
+                for connectorType in connectorTypes:
+                    if connectorType in res[bench][type]:
+                        if res[bench][type][connectorType] > refVal:
+                            refVal = res[bench][type][connectorType]
+            
+            if refVal == 0:  # Skip if no data for these connectors
                 continue
                 
             line = "{:30} - {:20} |".format(bench, type)
@@ -586,7 +594,7 @@ def print_results_table(connectorTypes, title=None):
                     line = line + "{:6.0} | {:4.0} |".format("", "")
                 else:
                     val = res[bench][type][connectorType]
-                    line = line + "{:6.0f} | {:4.0%} |".format(val, val / maxVal)
+                    line = line + "{:6.0f} | {:4.0%} |".format(val, val / refVal)
             print(line)
     print(header1)
 
@@ -645,17 +653,27 @@ def print_results_table(connectorTypes, title=None):
 
     # Print aggregate results
     for bench in result2:
-        maxVal = 0
-        for connectorType in result2[bench]:
-            if (result2[bench][connectorType] > maxVal):
-                maxVal = result2[bench][connectorType]
+        # Use fastest C connector as reference (100%), or max if C not present
+        refVal = 0
+        # Find the fastest between C mysql and C mariadb
+        for c_connector in ['c mysql', 'c mariadb']:
+            if c_connector in result2[bench]:
+                if result2[bench][c_connector] > refVal:
+                    refVal = result2[bench][c_connector]
+        
+        # If no C connector, fall back to max value
+        if refVal == 0:
+            for connectorType in result2[bench]:
+                if (result2[bench][connectorType] > refVal):
+                    refVal = result2[bench][connectorType]
+        
         line = "{:30} |".format(bench)
         for connectorType in connectorTypes:
             if (not connectorType in result2[bench]):
                 line = line + "{:6.0} | {:4.0} |".format("", "")
             else:
                 val = result2[bench][connectorType]
-                line = line + "{:6.0f} | {:4.0%} |".format(val, val / maxVal)
+                line = line + "{:6.0f} | {:4.0%} |".format(val, val / refVal)
         print(line)
     print(header1)
 
